@@ -33,7 +33,7 @@ namespace MarkdownMode
         [Name("markdown.header")]
         sealed class MarkdownHeaderFormat : ClassificationFormatDefinition
         {
-            public MarkdownHeaderFormat() { this.ForegroundColor = Colors.LightPink; }
+            public MarkdownHeaderFormat() { this.ForegroundColor = Colors.Purple; }
         }
 
         [Export(typeof(EditorFormatDefinition))]
@@ -76,6 +76,14 @@ namespace MarkdownMode
             public MarkdownH5Format() { this.FontRenderingSize = 14; }
         }
 
+        [Export(typeof(EditorFormatDefinition))]
+        [ClassificationType(ClassificationTypeNames = "markdown.header.h6")]
+        [Name("markdown.header.h6")]
+        sealed class MarkdownH6Format : ClassificationFormatDefinition
+        {
+            public MarkdownH6Format() { this.FontRenderingSize = 12; }
+        }
+
         // Lists
 
         [Export(typeof(EditorFormatDefinition))]
@@ -111,62 +119,76 @@ namespace MarkdownMode
         [Name("markdown.blockquote")]
         sealed class MarkdownBlockquoteFormat : ClassificationFormatDefinition
         {
-            public MarkdownBlockquoteFormat() { this.ForegroundColor = Colors.DarkRed; }
+            public MarkdownBlockquoteFormat() { this.ForegroundColor = Colors.IndianRed; }
         }
 
         // Links
-	//
-	// TODO: Finish writing these formats
 
-        [Export]
-        [Name("markdown.link")]
-        [BaseDefinition("markdown")]
-        internal static ClassificationTypeDefinition MarkdownLinkDefinition;
+        // No formatting information for markdown.link, since it is a base type
 
-        [Export]
+        [Export(typeof(EditorFormatDefinition))]
+        [ClassificationType(ClassificationTypeNames = "markdown.link.text")]
         [Name("markdown.link.text")]
-        [BaseDefinition("markdown.link")]
-        internal static ClassificationTypeDefinition MarkdownLinkTextDefinition;
+        sealed class MarkdownLinkText : ClassificationFormatDefinition
+        {
+            public MarkdownLinkText() 
+            {
+                this.ForegroundColor = Colors.DeepPink;
+                this.TextDecorations = System.Windows.TextDecorations.Underline;
+            }
+        }
 
-        [Export]
+        [Export(typeof(EditorFormatDefinition))]
+        [ClassificationType(ClassificationTypeNames = "markdown.link.title")]
         [Name("markdown.link.title")]
-        [BaseDefinition("markdown.link")]
-        internal static ClassificationTypeDefinition MarkdownLinkTitleDefinition;
+        sealed class MarkdownLinkTitle : ClassificationFormatDefinition
+        {
+            public MarkdownLinkTitle()
+            {
+                this.IsBold = true;
+            }
+        }
 
-        [Export]
+        [Export(typeof(EditorFormatDefinition))]
+        [ClassificationType(ClassificationTypeNames = "markdown.link.label")]
         [Name("markdown.link.label")]
-        [BaseDefinition("markdown.link")]
-        internal static ClassificationTypeDefinition MarkdownLinkLabelDefinition;
+        sealed class MarkdownLinkLabel : ClassificationFormatDefinition
+        {
+            public MarkdownLinkLabel()
+            {
+                this.ForegroundColor = Colors.SkyBlue;
+            }
+        }
 
-        [Export]
-        [Name("markdown.link.definition")]
-        [BaseDefinition("markdown.link")]
-        internal static ClassificationTypeDefinition MarkdownLinkDefinitionDefinition;
+        [Export(typeof(EditorFormatDefinition))]
+        [ClassificationType(ClassificationTypeNames = "markdown.link.punctuation")]
+        [Name("markdown.link.punctuation")]
+        sealed class MarkdownLinkPunctuation : ClassificationFormatDefinition
+        {
+            public MarkdownLinkPunctuation()
+            {
+                this.ForegroundColor = Colors.IndianRed;
+                this.IsBold = true;
+            }
+        }
 
         // Link URLs
 
-        [Export]
+        [Export(typeof(EditorFormatDefinition))]
+        [ClassificationType(ClassificationTypeNames = "markdown.url")]
         [Name("markdown.url")]
-        [BaseDefinition("markdown")]
-        internal static ClassificationTypeDefinition MarkdownLinkUrlDefinition;
-
-        [Export]
-        [Name("markdown.url.inline")]
-        [BaseDefinition("markdown.link.url")]
-        internal static ClassificationTypeDefinition MarkdownInlineLinkDefinition;
-
-        [Export]
-        [Name("markdown.url.reference")]
-        [BaseDefinition("markdown.link.url")]
-        internal static ClassificationTypeDefinition MarkdownReferenceLinkDefinition;
-
-        [Export]
-        [Name("markdown.url.automatic")]
-        [BaseDefinition("markdown.link.url")]
-        internal static ClassificationTypeDefinition MarkdownAutomaticLinkDefinition;
+        [Order(After = "url")]  // Even override the default "blue" urls
+        sealed class MarkdownUrl : ClassificationFormatDefinition
+        {
+            public MarkdownUrl()
+            {
+                this.ForegroundColor = Colors.LimeGreen;
+            }
+        }
 
         // Images
 
+        /*
         [Export]
         [Name("markdown.image")]
         [BaseDefinition("markdown")]
@@ -195,9 +217,11 @@ namespace MarkdownMode
 
         // Miscellaneous
 
+
         [Export]
         [Name("markdown.horizontalrule")]
         [BaseDefinition("markdown")]
         internal static ClassificationTypeDefinition MarkdownHorizontalRuleDefinition;
+         */
     }
 }

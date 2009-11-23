@@ -60,7 +60,12 @@ namespace MarkdownMode
         [Export]
         [Name("markdown.header.h5")]
         [BaseDefinition("markdown.header")]
-        internal static ClassificationTypeDefinition MarkdownH4Definition;
+        internal static ClassificationTypeDefinition MarkdownH5Definition;
+
+        [Export]
+        [Name("markdown.header.h6")]
+        [BaseDefinition("markdown.header")]
+        internal static ClassificationTypeDefinition MarkdownH6Definition;
 
         // Lists
 
@@ -121,9 +126,9 @@ namespace MarkdownMode
         internal static ClassificationTypeDefinition MarkdownLinkLabelDefinition;
 
         [Export]
-        [Name("markdown.link.definition")]
+        [Name("markdown.link.punctuation")]
         [BaseDefinition("markdown.link")]
-        internal static ClassificationTypeDefinition MarkdownLinkDefinitionDefinition;
+        internal static ClassificationTypeDefinition MarkdownLinkPunctuationDefinition;
 
         // Link URLs
         
@@ -134,17 +139,17 @@ namespace MarkdownMode
 
         [Export]
         [Name("markdown.url.inline")]
-        [BaseDefinition("markdown.link.url")]
+        [BaseDefinition("markdown.url")]
         internal static ClassificationTypeDefinition MarkdownInlineLinkDefinition;
-
+        
         [Export]
-        [Name("markdown.url.reference")]
-        [BaseDefinition("markdown.link.url")]
-        internal static ClassificationTypeDefinition MarkdownReferenceLinkDefinition;
+        [Name("markdown.url.definition")]
+        [BaseDefinition("markdown.url")]
+        internal static ClassificationTypeDefinition MarkdownDefinitionLinkDefinition;
 
         [Export]
         [Name("markdown.url.automatic")]
-        [BaseDefinition("markdown.link.url")]
+        [BaseDefinition("markdown.url")]
         internal static ClassificationTypeDefinition MarkdownAutomaticLinkDefinition;
 
         // Images
@@ -160,11 +165,6 @@ namespace MarkdownMode
         internal static ClassificationTypeDefinition MarkdownImageAltDefinition;
 
         [Export]
-        [Name("markdown.image.alt")]
-        [BaseDefinition("markdown.image")]
-        internal static ClassificationTypeDefinition MarkdownImageAltDefinition;
-
-        [Export]
         [Name("markdown.image.title")]
         [BaseDefinition("markdown.image")]
         internal static ClassificationTypeDefinition MarkdownImageTitleDefinition;
@@ -173,7 +173,7 @@ namespace MarkdownMode
         [Name("markdown.url.image")]
         [BaseDefinition("markdown.image")]
         [BaseDefinition("markdown.url")]
-        internal static ClassificationTypeDefinition MarkdownImageAltDefinition;
+        internal static ClassificationTypeDefinition MarkdownImageUrlDefinition;
 
         // Miscellaneous
 
