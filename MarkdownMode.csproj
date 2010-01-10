@@ -65,6 +65,8 @@
     <Compile Include="ClassificationTypes.cs" />
     <Compile Include="Classifier.cs" />
     <Compile Include="ContentType.cs" />
+    <Compile Include="Markdown.cs" />
+    <Compile Include="MarkdownParser.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="source.extension.vsixmanifest">

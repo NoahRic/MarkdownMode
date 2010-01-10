@@ -25,15 +25,16 @@ namespace MarkdownMode
             public MarkdownBoldFormat() { this.IsBold = true; }
         }
 
-
         // Headers
 
         [Export(typeof(EditorFormatDefinition))]
         [ClassificationType(ClassificationTypeNames = "markdown.header")]
         [Name("markdown.header")]
+        [DisplayName("Markdown header")]
+        [UserVisible(true)]
         sealed class MarkdownHeaderFormat : ClassificationFormatDefinition
         {
-            public MarkdownHeaderFormat() { this.ForegroundColor = Colors.Purple; }
+            public MarkdownHeaderFormat() { this.ForegroundColor = Colors.MediumPurple; }
         }
 
         [Export(typeof(EditorFormatDefinition))]
@@ -99,14 +100,22 @@ namespace MarkdownMode
         [Export(typeof(EditorFormatDefinition))]
         [ClassificationType(ClassificationTypeNames = "markdown.code")]
         [Name("markdown.code")]
+        [DisplayName("Markdown code block")]
+        [UserVisible(true)]
+        [Order(Before = Priority.Default, After = "markdown.blockquote")] // Low priority
         sealed class MarkdownCodeFormat : ClassificationFormatDefinition
         {
-            public MarkdownCodeFormat() { this.FontTypeface = new Typeface("Consolas"); }
+            public MarkdownCodeFormat() 
+            { 
+                this.ForegroundColor = Colors.LimeGreen;
+                this.FontTypeface = new Typeface("Courier New"); 
+            }
         }
 
         [Export(typeof(EditorFormatDefinition))]
         [ClassificationType(ClassificationTypeNames = "markdown.pre")]
         [Name("markdown.pre")]
+        [Order(Before = Priority.Default, After = "markdown.blockquote")] // Low priority
         sealed class MarkdownPreFormat : ClassificationFormatDefinition
         {
             public MarkdownPreFormat() { this.FontTypeface = new Typeface("Courier New"); }
@@ -117,6 +126,9 @@ namespace MarkdownMode
         [Export(typeof(EditorFormatDefinition))]
         [ClassificationType(ClassificationTypeNames = "markdown.blockquote")]
         [Name("markdown.blockquote")]
+        [DisplayName("Markdown Blockquote")]
+        [UserVisible(true)]
+        [Order(Before = Priority.Default)] // Low priority
         sealed class MarkdownBlockquoteFormat : ClassificationFormatDefinition
         {
             public MarkdownBlockquoteFormat() { this.ForegroundColor = Colors.IndianRed; }
@@ -124,15 +136,29 @@ namespace MarkdownMode
 
         // Links
 
-        // No formatting information for markdown.link, since it is a base type
+        [Export(typeof(EditorFormatDefinition))]
+        [ClassificationType(ClassificationTypeNames = "markdown.link")]
+        [Name("markdown.link")]
+        [Order(Before = Priority.Default, After = "markdown.blockquote")] // Low priority
+        sealed class MarkdownLink : ClassificationFormatDefinition
+        {
+            public MarkdownLink()
+            {
+                this.ForegroundColor = Colors.Crimson;
+                this.IsBold = true;
+            }
+        }
 
         [Export(typeof(EditorFormatDefinition))]
         [ClassificationType(ClassificationTypeNames = "markdown.link.text")]
         [Name("markdown.link.text")]
+        [DisplayName("Markdown link text")]
+        [UserVisible(true)]
         sealed class MarkdownLinkText : ClassificationFormatDefinition
         {
             public MarkdownLinkText() 
             {
+                this.IsBold = false;
                 this.ForegroundColor = Colors.DeepPink;
                 this.TextDecorations = System.Windows.TextDecorations.Underline;
             }
@@ -141,87 +167,88 @@ namespace MarkdownMode
         [Export(typeof(EditorFormatDefinition))]
         [ClassificationType(ClassificationTypeNames = "markdown.link.title")]
         [Name("markdown.link.title")]
+        [DisplayName("Markdown link title")]
+        [UserVisible(true)]
         sealed class MarkdownLinkTitle : ClassificationFormatDefinition
         {
             public MarkdownLinkTitle()
             {
                 this.IsBold = true;
+                this.ForegroundColor = Colors.CadetBlue;
             }
         }
 
         [Export(typeof(EditorFormatDefinition))]
         [ClassificationType(ClassificationTypeNames = "markdown.link.label")]
         [Name("markdown.link.label")]
+        [DisplayName("Markdown link label")]
+        [UserVisible(true)]
         sealed class MarkdownLinkLabel : ClassificationFormatDefinition
         {
             public MarkdownLinkLabel()
             {
-                this.ForegroundColor = Colors.SkyBlue;
-            }
-        }
-
-        [Export(typeof(EditorFormatDefinition))]
-        [ClassificationType(ClassificationTypeNames = "markdown.link.punctuation")]
-        [Name("markdown.link.punctuation")]
-        sealed class MarkdownLinkPunctuation : ClassificationFormatDefinition
-        {
-            public MarkdownLinkPunctuation()
-            {
-                this.ForegroundColor = Colors.IndianRed;
-                this.IsBold = true;
-            }
-        }
-
-        // Link URLs
-
-        [Export(typeof(EditorFormatDefinition))]
-        [ClassificationType(ClassificationTypeNames = "markdown.url")]
-        [Name("markdown.url")]
-        [Order(After = "url")]  // Even override the default "blue" urls
-        sealed class MarkdownUrl : ClassificationFormatDefinition
-        {
-            public MarkdownUrl()
-            {
-                this.ForegroundColor = Colors.LimeGreen;
+                this.ForegroundColor = Colors.DeepSkyBlue;
+                this.IsBold = false;
             }
         }
 
         // Images
 
-        /*
-        [Export]
+        [Export(typeof(EditorFormatDefinition))]
+        [ClassificationType(ClassificationTypeNames = "markdown.image")]
         [Name("markdown.image")]
-        [BaseDefinition("markdown")]
-        internal static ClassificationTypeDefinition MarkdownImageDefinition;
+        [Order(Before = Priority.Default, After = "markdown.blockquote")] // Low priority
+        sealed class MarkdownImage : ClassificationFormatDefinition
+        {
+            public MarkdownImage()
+            {
+                this.ForegroundColor = Colors.Crimson;
+                this.IsBold = true;
+            }
+        }
 
-        [Export]
+        [Export(typeof(EditorFormatDefinition))]
+        [ClassificationType(ClassificationTypeNames = "markdown.image.alt")]
         [Name("markdown.image.alt")]
-        [BaseDefinition("markdown.image")]
-        internal static ClassificationTypeDefinition MarkdownImageAltDefinition;
-
-        [Export]
-        [Name("markdown.image.alt")]
-        [BaseDefinition("markdown.image")]
-        internal static ClassificationTypeDefinition MarkdownImageAltDefinition;
-
-        [Export]
+        [DisplayName("Markdown image alt text")]
+        [UserVisible(true)]
+        sealed class MarkdownImageAlt : ClassificationFormatDefinition
+        {
+            public MarkdownImageAlt() 
+            {
+                this.IsBold = false;
+                this.IsItalic = true;
+                this.ForegroundColor = Colors.DeepPink;
+            }
+        }
+        [Export(typeof(EditorFormatDefinition))]
+        [ClassificationType(ClassificationTypeNames = "markdown.image.title")]
         [Name("markdown.image.title")]
-        [BaseDefinition("markdown.image")]
-        internal static ClassificationTypeDefinition MarkdownImageTitleDefinition;
-
-        [Export]
-        [Name("markdown.url.image")]
-        [BaseDefinition("markdown.image")]
-        [BaseDefinition("markdown.url")]
-        internal static ClassificationTypeDefinition MarkdownImageAltDefinition;
+        [DisplayName("Markdown image title")]
+        [UserVisible(true)]
+        sealed class MarkdownImageTitle : ClassificationFormatDefinition
+        {
+            public MarkdownImageTitle()
+            {
+                this.IsBold = true;
+                this.ForegroundColor = Colors.CadetBlue;
+            }
+        }
 
         // Miscellaneous
 
-
-        [Export]
+        [Export(typeof(EditorFormatDefinition))]
+        [ClassificationType(ClassificationTypeNames = "markdown.horizontalrule")]
         [Name("markdown.horizontalrule")]
-        [BaseDefinition("markdown")]
-        internal static ClassificationTypeDefinition MarkdownHorizontalRuleDefinition;
-         */
+        [DisplayName("Markdown horizontal rule")]
+        [UserVisible(true)]
+        sealed class MarkdownHorizontalRule : ClassificationFormatDefinition
+        {
+            public MarkdownHorizontalRule()
+            {
+                this.TextDecorations = System.Windows.TextDecorations.Strikethrough;
+                this.IsBold = true;
+            }
+        }
     }
 }

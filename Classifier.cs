@@ -18,84 +18,47 @@ namespace MarkdownMode
 
         public IClassifier GetClassifier(ITextBuffer buffer)
         {
-            return buffer.Properties.GetOrCreateSingletonProperty(() => new MarkdownClassifier(ClassificationRegistry));
+            return buffer.Properties.GetOrCreateSingletonProperty(() => new MarkdownClassifier(buffer, ClassificationRegistry));
         }
     }
 
     class MarkdownClassifier : IClassifier
     {
-        /// <summary>
-        /// A list of regular expression groups (list of regular expressions) to use.
-        /// When the first match is found in each group, the rest of that group will be skipped.
-        /// </summary>
-        static List<List<MarkupRule>> Rules;
-
-        static MarkdownClassifier()
-        {
-            Rules = new List<List<MarkupRule>>();
-            string p = "markdown.link.punctuation";
-
-            // Headers
-            List<MarkupRule> headers = new List<MarkupRule>();
-            headers.Add(new MarkupRule(@"^######.*$", "markdown.header.h6"));
-            headers.Add(new MarkupRule(@"^#####.*$", "markdown.header.h5"));
-            headers.Add(new MarkupRule(@"^####.*$", "markdown.header.h4"));
-            headers.Add(new MarkupRule(@"^###.*$", "markdown.header.h3"));
-            headers.Add(new MarkupRule(@"^##.*$", "markdown.header.h2"));
-            headers.Add(new MarkupRule(@"^#.*$", "markdown.header.h1"));
-
-            Rules.Add(headers);
-
-            // Blocks
-            List<MarkupRule> blocks = new List<MarkupRule>();
-            blocks.Add(new MarkupRule(@"^\s*>.*$", "markdown.blockquote"));
-            blocks.Add(new MarkupRule(@"    |\t", "markdown.code"));
-
-            // Link definition
-            blocks.Add(new MarkupRule(@"^ {0,3}(\[)([^\]]+)(\]:)\s*(\S*)",
-                                              new string[] { p, "markdown.link.label", p, "markdown.url.definition" }));
-
-            Rules.Add(blocks);
-
-            // Links
-
-            // By label
-            AddRule(Rules, new MarkupRule(@"(\[)([^\]]+)(\]\s*\[)([^\]]*)(\])",
-                                          new string[] { p, "markdown.link.text", p, "markdown.link.label", p }));
-
-            // By inline url
-            AddRule(Rules, new MarkupRule(@"(\[)([^\]]+)(\]\s*\()([^\)]*)(\))",
-                                          new string[] { p, "markdown.link.text", p, "markdown.url.inline", p }));
-
-            // Automatic link
-            AddRule(Rules, new MarkupRule(@"(\<)([^\>]+)(\>)",
-                                          new string[] { p, "markdown.url.automatic", p }));
-
-            // Bold/italics
-            AddRule(Rules, new MarkupRule(@"(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)", "markdown.italics"));
-            AddRule(Rules, new MarkupRule(@"(?<!\*)\*\*(?!\*)(.+?)(?<!\*)\*\*(?!\*)", "markdown.bold"));
-            // TODO: What is bold + italics?
-
-            // Lists
-            AddRule(Rules, new MarkupRule(@"\s*([-*+])\s+", "markdown.list.unordered"));
-            AddRule(Rules, new MarkupRule(@"\s*(\d+.)\s+", "markdown.list.ordered"));
-        }
-
-        static void AddRule(List<List<MarkupRule>> rules, MarkupRule rule)
-        {
-            rules.Add(new List<MarkupRule>() { rule });
-        }
-
         IClassificationTypeRegistryService _classificationRegistry;
+        ITextBuffer _buffer;
 
-        public MarkdownClassifier(IClassificationTypeRegistryService classificationRegistry)
+        public MarkdownClassifier(ITextBuffer buffer, IClassificationTypeRegistryService classificationRegistry)
         {
             _classificationRegistry = classificationRegistry;
+            _buffer = buffer;
+
+            _buffer.Changed += BufferChanged;
+        }
+
+        void BufferChanged(object sender, TextContentChangedEventArgs e)
+        {
+            if (e.After != _buffer.CurrentSnapshot)
+                return;
+
+            ITextSnapshot snapshot = e.After;
+
+            foreach (var change in e.Changes)
+            {
+                SnapshotSpan span = new SnapshotSpan(snapshot, change.NewSpan);
+                SnapshotSpan paragraph = GetEnclosingParagraph(span);
+
+                if (MarkdownParser.ParagraphContainsMultilineTokens(paragraph.GetText()))
+                {
+                    var temp = this.ClassificationChanged;
+                    if (temp != null)
+                        temp(this, new ClassificationChangedEventArgs(paragraph));
+                }
+            }
         }
 
         public event EventHandler<ClassificationChangedEventArgs> ClassificationChanged;
 
-        public IList<ClassificationSpan> GetClassificationSpans(SnapshotSpan span)
+        SnapshotSpan GetEnclosingParagraph(SnapshotSpan span)
         {
             ITextSnapshot snapshot = span.Snapshot;
 
@@ -103,72 +66,108 @@ namespace MarkdownMode
             int startLineNumber = startLine.LineNumber;
             int endLineNumber = (span.End <= startLine.EndIncludingLineBreak) ? startLineNumber : snapshot.GetLineNumberFromPosition(span.End);
 
+            // Find the first/last empty line
+            bool foundEmpty = false;
+            while (startLineNumber > 0)
+            {
+                bool lineEmpty = snapshot.GetLineFromLineNumber(startLineNumber).GetText().Trim().Length == 0;
+
+                if (lineEmpty)
+                {
+                    foundEmpty = true;
+                }
+                else if (foundEmpty)
+                {
+                    startLineNumber++;
+                    break;
+                }
+
+                startLineNumber--;
+            }
+
+            foundEmpty = false;
+            while (endLineNumber < snapshot.LineCount - 1)
+            {
+                bool lineEmpty = snapshot.GetLineFromLineNumber(endLineNumber).GetText().Trim().Length == 0;
+
+                if (lineEmpty)
+                {
+                    foundEmpty = true;
+                }
+                else if (foundEmpty)
+                {
+                    endLineNumber--;
+                    break;
+                }
+
+                endLineNumber++;
+            }
+
+            // Generate a string for this paragraph chunk
+            SnapshotPoint startPoint = snapshot.GetLineFromLineNumber(startLineNumber).Start;
+            SnapshotPoint endPoint = snapshot.GetLineFromLineNumber(endLineNumber).End;
+
+            return new SnapshotSpan(startPoint, endPoint);
+        }
+
+        public IList<ClassificationSpan> GetClassificationSpans(SnapshotSpan span)
+        {
+            ITextSnapshot snapshot = span.Snapshot;
+
+            SnapshotSpan paragraph = GetEnclosingParagraph(span);
+
+            string paragraphText = snapshot.GetText(paragraph);
+
+            // And now parse the given paragraph and return classification spans for everything
+
             List<ClassificationSpan> spans = new List<ClassificationSpan>();
 
-            for (int lineNumber = startLineNumber; lineNumber <= endLineNumber; lineNumber++)
+            foreach (var token in MarkdownParser.ParseMarkdownParagraph(paragraphText))
             {
-                var line = snapshot.GetLineFromLineNumber(lineNumber);
-                string text = line.GetText();
+                IClassificationType type = GetClassificationTypeForMarkdownToken(token.TokenType);
 
-                foreach (var group in Rules)
-                {
-                    foreach (var rule in group)
-                    {
-                        bool matched = false;
-
-                        foreach (Match match in rule.Regex.Matches(text))
-                        {
-                            matched = true;
-
-                            //Try and add the capture groups, if there are any
-                            if (match.Groups.Count > 1)
-                            {
-                                for (int j = 1; j < match.Groups.Count; j++)
-                                {
-                                    IClassificationType classification = _classificationRegistry.GetClassificationType(rule.Names[j - 1]);
-                            
-                                    spans.Add(new ClassificationSpan(CreateSpan(line.Start, match.Groups[j].Index, match.Groups[j].Length),
-                                              classification));
-                                }
-                            }
-                            else
-                            {
-                                IClassificationType classification = _classificationRegistry.GetClassificationType(rule.Names[0]);
-                            
-                                spans.Add(new ClassificationSpan(CreateSpan(line.Start, match.Groups[0].Index, match.Groups[0].Length),
-                                          classification));
-                            }
-                        }
-
-                        if (matched)
-                            break;
-                    }
-                }
+                spans.Add(new ClassificationSpan(new SnapshotSpan(paragraph.Start + token.Span.Start, token.Span.Length), type));
             }
 
             return spans;
         }
 
-        private static SnapshotSpan CreateSpan(SnapshotPoint start, int offset, int length)
+        static Dictionary<MarkdownParser.TokenType, string> _tokenToClassificationType = new Dictionary<MarkdownParser.TokenType, string>()
         {
-            return new SnapshotSpan(start + offset, start + offset + length);
-        }
-    }
+            { MarkdownParser.TokenType.AutomaticUrl, "markdown.url.automatic" },
+            { MarkdownParser.TokenType.Blockquote, "markdown.blockquote" },
+            { MarkdownParser.TokenType.Bold, "markdown.bold" },
+            { MarkdownParser.TokenType.CodeBlock, "markdown.code" },
+            { MarkdownParser.TokenType.H1, "markdown.header.h1" },
+            { MarkdownParser.TokenType.H2, "markdown.header.h2" },
+            { MarkdownParser.TokenType.H3, "markdown.header.h3" },
+            { MarkdownParser.TokenType.H4, "markdown.header.h4" },
+            { MarkdownParser.TokenType.H5, "markdown.header.h5" },
+            { MarkdownParser.TokenType.H6, "markdown.header.h6" },
+            { MarkdownParser.TokenType.HorizontalRule, "markdown.horizontalrule" },
+            { MarkdownParser.TokenType.ImageAltText, "markdown.image.alt" },
+            { MarkdownParser.TokenType.ImageExpression, "markdown.image" },
+            { MarkdownParser.TokenType.ImageLabel, "markdown.image.label" },
+            { MarkdownParser.TokenType.ImageTitle, "markdown.image.title" },
+            { MarkdownParser.TokenType.InlineUrl, "markdown.url.inline" },
+            { MarkdownParser.TokenType.Italics, "markdown.italics" },
+            { MarkdownParser.TokenType.LinkExpression, "markdown.link" },
+            { MarkdownParser.TokenType.LinkLabel, "markdown.link.label" },
+            { MarkdownParser.TokenType.LinkText, "markdown.link.text" },
+            { MarkdownParser.TokenType.LinkTitle, "markdown.link.title" },
+            { MarkdownParser.TokenType.OrderedListElement, "markdown.list.ordered" },
+            { MarkdownParser.TokenType.PreBlock, "markdown.pre" },
+            { MarkdownParser.TokenType.UnorderedListElement, "markdown.list.unordered" },
+            { MarkdownParser.TokenType.UrlDefinition, "markdown.url.definition" },
+        };
 
-    /// <summary>
-    /// A regex/classification type pair.
-    /// </summary>
-    class MarkupRule
-    {
-        public Regex Regex { get; private set; }
-        public string[] Names { get; private set; }
-
-        public MarkupRule(string regex, string classificationTypeName) : this(regex, new string[] { classificationTypeName }) { }
-
-        public MarkupRule(string regex, string[] classificationTypeNames)
+        IClassificationType GetClassificationTypeForMarkdownToken(MarkdownParser.TokenType tokenType)
         {
-            Regex = new Regex(regex, RegexOptions.Compiled | RegexOptions.Singleline);
-            Names = classificationTypeNames;
+            string classificationType;
+            if (!_tokenToClassificationType.TryGetValue(tokenType, out classificationType))
+                throw new ArgumentException("Unable to find classification type for " + tokenType.ToString(), "tokenType");
+
+            return _classificationRegistry.GetClassificationType(classificationType);
         }
     }
 }
