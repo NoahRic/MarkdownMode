@@ -100,7 +100,7 @@ namespace MarkdownMode
         [Export(typeof(EditorFormatDefinition))]
         [ClassificationType(ClassificationTypeNames = "markdown.block")]
         [Name("markdown.block")]
-        [DisplayName("Markdown block block")]
+        [DisplayName("Markdown code block")]
         [UserVisible(true)]
         [Order(Before = Priority.Default, After = "markdown.blockquote")] // Low priority
         sealed class MarkdownCodeFormat : ClassificationFormatDefinition
@@ -126,7 +126,7 @@ namespace MarkdownMode
         [Export(typeof(EditorFormatDefinition))]
         [ClassificationType(ClassificationTypeNames = "markdown.blockquote")]
         [Name("markdown.blockquote")]
-        [DisplayName("Markdown Blockquote")]
+        [DisplayName("Markdown blockquote")]
         [UserVisible(true)]
         [Order(Before = Priority.Default)] // Low priority
         sealed class MarkdownBlockquoteFormat : ClassificationFormatDefinition

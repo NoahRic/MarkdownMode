@@ -39,14 +39,25 @@ namespace MarkdownMode
               (^[ \t]*)                  # leading whitespace = $2
               (" + Markdown.MarkerUL + @") [ \t]+ # list marker = $3
               ((?s:.+?)                  # list item text = $4
-              (\n{1,}))", RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace | RegexOptions.Multiline);
+              ((?:\r\n){1,}|\r{1,}|\n{1,}))", RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace | RegexOptions.Multiline);
 
         static Regex OlListItemRegex = new Regex(@"
               (\n)?                      # leading line = $1
               (^[ \t]*)                  # leading whitespace = $2
               (" + Markdown.MarkerOL + @") [ \t]+ # list marker = $3
               ((?s:.+?)                  # list item text = $4
-              (\n{1,}))", RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace | RegexOptions.Multiline);
+              ((?:\r\n){1,}|\r{1,}|\n{1,}))", RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace | RegexOptions.Multiline);
+
+        static Regex ParserListTopLevelRegex = new Regex(@"
+            (?:
+               (?<=                       # Starts with two consecutive blank lines (ignore whitespace between them)
+                 (?: (?:\r\n) | \r | \n )   
+                 [ \t]*
+                 (?: (?:\r\n) | \r | \n )
+               )
+               |
+               \A(?:\r\n|\r|\n)?)" + Markdown.WholeListRegex,
+            RegexOptions.Multiline | RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
 
         #region Markdown public parser interface
 
@@ -278,7 +289,7 @@ namespace MarkdownMode
         {
             List<Token> tokens = new List<Token>();
 
-            Regex regex = (listLevel == 0) ? Markdown.ListTopLevelRegex : Markdown.ListNestedRegex;
+            Regex regex = (listLevel == 0) ? ParserListTopLevelRegex : Markdown.ListNestedRegex;
 
             text = regex.Replace(text, match =>
                 {

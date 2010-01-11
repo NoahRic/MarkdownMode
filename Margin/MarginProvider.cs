@@ -19,9 +19,6 @@ namespace MarkdownMode
     sealed class MarginProvider : IWpfTextViewMarginProvider
     {
         [Import]
-        IMarkdownPreviewWindowBrokerService PreviewWindowBrokerService = null;
-
-        [Import]
         System.IServiceProvider GlobalServiceProvider = null;
 
         public IWpfTextViewMargin CreateMargin(IWpfTextViewHost wpfTextViewHost, IWpfTextViewMargin marginContainer)
@@ -32,12 +29,14 @@ namespace MarkdownMode
                 document = null;
             }
 
+            MarkdownPackage package = null;
+
             // If there is a shell service (which there should be, in VS), force the markdown package to load
             IVsShell shell = GlobalServiceProvider.GetService(typeof(SVsShell)) as IVsShell;
             if (shell != null)
-                MarkdownPackage.ForceLoadPackage(shell);
+                package = MarkdownPackage.ForceLoadPackage(shell);
 
-            return new Margin(wpfTextViewHost.TextView, PreviewWindowBrokerService.GetPreviewWindowBroker(), document);
+            return new Margin(wpfTextViewHost.TextView, package, document);
         }
     }
 }

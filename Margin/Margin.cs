@@ -21,19 +21,31 @@ namespace MarkdownMode
         IWpfTextView textView;
         ITextDocument document;
         DispatcherTimer timer;
-        IMarkdownPreviewWindowBroker previewWindowBroker;
+        MarkdownPackage package;
 
         MarkdownSharp.Markdown markdownTransform = new MarkdownSharp.Markdown();
 
         MarkdownPreviewToolWindow GetPreviewWindow(bool create)
         {
-            return (previewWindowBroker != null) ? previewWindowBroker.GetMarkdownPreviewToolWindow(create) : null;
+            return (package != null) ? package.GetMarkdownPreviewToolWindow(create) : null;
         }
 
-        public Margin(IWpfTextView wpfTextView, IMarkdownPreviewWindowBroker previewWindowBroker, ITextDocument document)
+        string GetHTMLText(bool extraSpace = false)
+        {
+            StringBuilder html = new StringBuilder(markdownTransform.Transform(textView.TextBuffer.CurrentSnapshot.GetText()));
+            if (extraSpace)
+            {
+                for (int i = 0; i < 20; i++)
+                    html.Append("<br />");
+            }
+
+            return html.ToString();
+        }
+
+        public Margin(IWpfTextView wpfTextView, MarkdownPackage package, ITextDocument document)
         {
             this.textView = wpfTextView;
-            this.previewWindowBroker = previewWindowBroker;
+            this.package = package;
             this.timer = null;
             this.document = document;
 
@@ -58,17 +70,25 @@ namespace MarkdownMode
             this.Background = Brushes.SlateGray;
             this.Height = 25;
 
-            Button button = new Button() { Content = "Show preview window" };
-            button.Click += (sender, args) =>
+            Button showPreview = new Button() { Content = "Show preview window" };
+            showPreview.Click += (sender, args) =>
                 {
-                    if (previewWindowBroker != null)
+                    if (package != null)
                     {
-                        var window = previewWindowBroker.GetMarkdownPreviewToolWindow(true);
+                        var window = package.GetMarkdownPreviewToolWindow(true);
                         ((IVsWindowFrame)window.Frame).Show();
                     }
                 };
 
-            this.Children.Add(button);
+            this.Children.Add(showPreview);
+
+            Button copyHtml = new Button() { Content = "Copy HTML to clipboard" };
+            copyHtml.Click += (sender, args) =>
+                {
+                    Clipboard.SetText(GetHTMLText());
+                };
+
+            this.Children.Add(copyHtml);
         }
 
         string GetDocumentName()
@@ -110,7 +130,7 @@ namespace MarkdownMode
             {
                 ThreadPool.QueueUserWorkItem(state =>
                     {
-                        string content = markdownTransform.Transform(textView.TextBuffer.CurrentSnapshot.GetText());
+                        string content = GetHTMLText(extraSpace: true);
 
                         this.Dispatcher.Invoke(new Action(() =>
                             {
@@ -125,7 +145,7 @@ namespace MarkdownMode
             {
                 var previewWindow = GetPreviewWindow(create: true);
                 if (previewWindow != null)
-                    previewWindow.SetPreviewContent(this, markdownTransform.Transform(textView.TextBuffer.CurrentSnapshot.GetText()), GetDocumentName());
+                    previewWindow.SetPreviewContent(this, GetHTMLText(extraSpace: true), GetDocumentName());
             }
         }
 

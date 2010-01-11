@@ -86,7 +86,6 @@
       <DesignTime>True</DesignTime>
     </Compile>
     <Compile Include="ToolWindow\Guids.cs" />
-    <Compile Include="ToolWindow\MarkdownPreviewWindowBrokerService.cs" />
     <Compile Include="ToolWindow\MarkdownPackage.cs" />
     <Compile Include="ToolWindow\MarkdownPreviewToolWindow.cs" />
   </ItemGroup>

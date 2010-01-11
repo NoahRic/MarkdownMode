@@ -17,19 +17,19 @@ namespace MarkdownMode
     [ProvideMenuResource(1000, 1)]
     [ProvideToolWindow(typeof(MarkdownPreviewToolWindow))]
     [Guid(GuidList.guidMarkdownPackagePkgString)]
-    public sealed class MarkdownPackage : Package, IMarkdownPreviewWindowBroker
+    public sealed class MarkdownPackage : Package
     {
-        public static bool ForceLoadPackage(IVsShell shell)
+        public static MarkdownPackage ForceLoadPackage(IVsShell shell)
         {
             Guid packageGuid = new Guid(GuidList.guidMarkdownPackagePkgString);
             IVsPackage package;
 
-            int hr = shell.IsPackageLoaded(ref packageGuid, out package);
+            if (VSConstants.S_OK == shell.IsPackageLoaded(ref packageGuid, out package))
+                return package as MarkdownPackage;
+            else if (ErrorHandler.Succeeded(shell.LoadPackage(ref packageGuid, out package)))
+                return package as MarkdownPackage;
 
-            if (hr == VSConstants.S_OK)
-                return true;
-            else
-                return ErrorHandler.Succeeded(shell.LoadPackage(ref packageGuid, out package));
+            return null;
         }
 
         public MarkdownPackage()
@@ -78,14 +78,6 @@ namespace MarkdownMode
                 CommandID toolwndCommandID = new CommandID(GuidList.guidMarkdownPackageCmdSet, PkgCmdId.cmdidMarkdownPreviewWindow);
                 MenuCommand menuToolWin = new MenuCommand(ShowToolWindow, toolwndCommandID);
                 mcs.AddCommand( menuToolWin );
-            }
-
-            IComponentModel componentModel = GetService(typeof(SComponentModel)) as IComponentModel;
-            if (componentModel != null)
-            {
-                var brokerService = componentModel.GetService<IMarkdownPreviewWindowBrokerService>();
-                if (brokerService != null)
-                    brokerService.RegisterPreviewWindowBroker(this);
             }
         }
         #endregion
