@@ -6,6 +6,7 @@ using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Utilities;
 using System.Text.RegularExpressions;
+using System.Diagnostics;
 
 namespace MarkdownMode
 {
@@ -35,20 +36,22 @@ namespace MarkdownMode
             _buffer.Changed += BufferChanged;
         }
 
+        /// <summary>
+        /// When the buffer changes, check to see if any of the edits were in a paragraph with multi-line tokens.
+        /// If so, we need to send out a classification changed event for those paragraphs.
+        /// </summary>
         void BufferChanged(object sender, TextContentChangedEventArgs e)
         {
-            if (e.After != _buffer.CurrentSnapshot)
-                return;
-
-            ITextSnapshot snapshot = e.After;
+            int eventsSent = 0;
 
             foreach (var change in e.Changes)
             {
-                SnapshotSpan span = new SnapshotSpan(snapshot, change.NewSpan);
-                SnapshotSpan paragraph = GetEnclosingParagraph(span);
+                SnapshotSpan paragraph = GetEnclosingParagraph(new SnapshotSpan(e.After, change.NewSpan));
 
                 if (MarkdownParser.ParagraphContainsMultilineTokens(paragraph.GetText()))
                 {
+                    eventsSent++;
+
                     var temp = this.ClassificationChanged;
                     if (temp != null)
                         temp(this, new ClassificationChangedEventArgs(paragraph));
@@ -137,7 +140,7 @@ namespace MarkdownMode
             { MarkdownParser.TokenType.AutomaticUrl, "markdown.url.automatic" },
             { MarkdownParser.TokenType.Blockquote, "markdown.blockquote" },
             { MarkdownParser.TokenType.Bold, "markdown.bold" },
-            { MarkdownParser.TokenType.CodeBlock, "markdown.code" },
+            { MarkdownParser.TokenType.CodeBlock, "markdown.block" },
             { MarkdownParser.TokenType.H1, "markdown.header.h1" },
             { MarkdownParser.TokenType.H2, "markdown.header.h2" },
             { MarkdownParser.TokenType.H3, "markdown.header.h3" },

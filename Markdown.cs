@@ -23,7 +23,7 @@
  * Copyright (c) 2009 Jeff Atwood
  * http://stackoverflow.com
  * http://www.codinghorror.com/blog/
- * http://code.google.com/p/markdownsharp/
+ * http://block.google.com/p/markdownsharp/
  * 
  * History: Milan ported the Markdown processor to C#. He granted license to me so I can open source it
  * and let the community contribute to and improve MarkdownSharp.
@@ -64,7 +64,7 @@ Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
 met:
 
-* Redistributions of source code must retain the above copyright notice,
+* Redistributions of source block must retain the above copyright notice,
   this list of conditions and the following disclaimer.
 
 * Redistributions in binary form must reproduce the above copyright
@@ -243,7 +243,7 @@ namespace MarkdownSharp
         internal const string MarkerUL = @"[*+-]";
         internal const string MarkerOL = @"\d+[.]";
         
-        internal  static string WholeListRegex = string.Format(@"
+        internal static string WholeListRegex = string.Format(@"
             (                               # $1 = whole list
               (                             # $2
                 [ ]{{0,{1}}}
@@ -268,23 +268,6 @@ namespace MarkdownSharp
 
         internal static Regex ListTopLevelRegex = new Regex(@"(?:(?<=\n\n)|\A\n?)" + WholeListRegex,
             RegexOptions.Multiline | RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
-
-
-        internal static Regex UlListItemRegex = new Regex(
-            @"(\n)?                      # leading line = $1
-              (^[ \t]*)                  # leading whitespace = $2
-              (" + MarkerUL + @") [ \t]+ # list marker = $3
-              ((?s:.+?)                  # list item text = $4
-              (\n{1,2}))      
-              (?= \n* (\z | \2 (" + MarkerUL + @") [ \t]+))", RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace | RegexOptions.Multiline);
-
-        internal static Regex OlListItemRegex = new Regex(@"
-              (\n)?                      # leading line = $1
-              (^[ \t]*)                  # leading whitespace = $2
-              (" + MarkerOL + @") [ \t]+ # list marker = $3
-              ((?s:.+?)                  # list item text = $4
-              (\n{1,2}))      
-              (?= \n* (\z | \2 (" + MarkerOL + @") [ \t]+))", RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace | RegexOptions.Multiline);
 
         // Links
 
@@ -459,7 +442,7 @@ namespace MarkdownSharp
 
         internal static Regex CodeBlockRegex = new Regex(string.Format(@"
                     (?:\n\n|\A)
-                    (                        # $1 = the code block -- one or more lines, starting with a space/tab
+                    (                        # $1 = the block block -- one or more lines, starting with a space/tab
                     (?:
                         (?:[ ]{{{0}}} | \t)  # Lines must start with a tab or a tab-width of spaces
                         .*\n+
@@ -472,7 +455,7 @@ namespace MarkdownSharp
         internal static Regex CodeSpanRegex = new Regex(@"
                     (?<!\\)   # Character before opening ` can't be a backslash
                     (`+)      # $1 = Opening run of `
-                    (.+?)     # $2 = The code block
+                    (.+?)     # $2 = The block block
                     (?<!`)
                     \1
                     (?!`)", RegexOptions.IgnorePatternWhitespace | RegexOptions.Singleline | RegexOptions.Compiled);
@@ -643,10 +626,9 @@ namespace MarkdownSharp
 
         private int _listLevel;
 
-
         /// <summary>
         /// current version of MarkdownSharp;  
-        /// see http://code.google.com/p/markdownsharp/ for the latest code or to contribute
+        /// see http://block.google.com/p/markdownsharp/ for the latest block or to contribute
         /// </summary>
         public string Version
         {
@@ -881,7 +863,7 @@ namespace MarkdownSharp
 
         /// <summary>
         /// Within tags -- meaning between &lt; and &gt; -- encode [\ ` * _] so they 
-        /// don't conflict with their use in Markdown for code, italics and strong. 
+        /// don't conflict with their use in Markdown for block, italics and strong. 
         /// We're replacing each such character with its corresponding hash 
         /// value; this is likely overkill, but it should prevent us from colliding 
         /// with the escape values by accident.
@@ -900,7 +882,7 @@ namespace MarkdownSharp
                 if (token.Type == HTMLTokenType.Tag)
                 {
                     value = value.Replace(@"\", EscapeTable[@"\"]);
-                    value = Regex.Replace(value, "(?<=.)</?code>(?=.)", EscapeTable[@"`"]);
+                    value = Regex.Replace(value, "(?<=.)</?block>(?=.)", EscapeTable[@"`"]);
                     value = EscapeBoldItalic(value);
                 }
 
@@ -1296,7 +1278,7 @@ namespace MarkdownSharp
         }
 
         /// <summary>
-        /// /// Turn Markdown 4-space indented code into HTML pre code blocks
+        /// /// Turn Markdown 4-space indented block into HTML pre block blocks
         /// </summary>
         private string DoCodeBlocks(string text)
         {
@@ -1312,26 +1294,26 @@ namespace MarkdownSharp
             codeBlock = Detab(codeBlock);
             codeBlock = _newlinesLeadingTrailing.Replace(codeBlock, "");
 
-            return string.Concat("\n\n<pre><code>", codeBlock, "\n</code></pre>\n\n");
+            return string.Concat("\n\n<pre><block>", codeBlock, "\n</block></pre>\n\n");
         }
 
         /// <summary>
-        /// Turn Markdown `code spans` into HTML code tags
+        /// Turn Markdown `block spans` into HTML block tags
         /// </summary>
         private string DoCodeSpans(string text)
         {
             //    * You can use multiple backticks as the delimiters if you want to
-            //        include literal backticks in the code span. So, this input:
+            //        include literal backticks in the block span. So, this input:
             //
             //        Just type ``foo `bar` baz`` at the prompt.
             //
             //        Will translate to:
             //
-            //          <p>Just type <code>foo `bar` baz</code> at the prompt.</p>
+            //          <p>Just type <block>foo `bar` baz</block> at the prompt.</p>
             //
             //        There's no arbitrary limit to the number of backticks you
             //        can use as delimters. If you need three consecutive backticks
-            //        in your code, use four for delimiters, etc.
+            //        in your block, use four for delimiters, etc.
             //
             //    * You can use spaces to get literal backticks at the edges:
             //
@@ -1339,7 +1321,7 @@ namespace MarkdownSharp
             //
             //        Turns to:
             //
-            //          ... type <code>`bar`</code> ...         
+            //          ... type <block>`bar`</block> ...         
             //
 
             return CodeSpanRegex.Replace(text, new MatchEvaluator(CodeSpanEvaluator));
@@ -1352,21 +1334,21 @@ namespace MarkdownSharp
             span = Regex.Replace(span, @"[ \t]*$", ""); // trailing whitespace
             span = EncodeCode(span);
 
-            return string.Concat("<code>", span, "</code>");
+            return string.Concat("<block>", span, "</block>");
         }
 
 
         /// <summary>
-        /// Encode/escape certain characters inside Markdown code runs.
+        /// Encode/escape certain characters inside Markdown block runs.
         /// </summary>
         /// <remarks>
-        /// The point is that in code, these characters are literals, and lose their 
+        /// The point is that in block, these characters are literals, and lose their 
         /// special Markdown meanings.
         /// </remarks>
         private string EncodeCode(string code)
         {
             // Encode all ampersands; HTML entities are not
-            // entities within a Markdown code span.
+            // entities within a Markdown block span.
             code = code.Replace("&", "&amp;");
 
             // Do the angle bracket song and dance

@@ -98,9 +98,9 @@ namespace MarkdownMode
         // Code/pre
 
         [Export(typeof(EditorFormatDefinition))]
-        [ClassificationType(ClassificationTypeNames = "markdown.code")]
-        [Name("markdown.code")]
-        [DisplayName("Markdown code block")]
+        [ClassificationType(ClassificationTypeNames = "markdown.block")]
+        [Name("markdown.block")]
+        [DisplayName("Markdown block block")]
         [UserVisible(true)]
         [Order(Before = Priority.Default, After = "markdown.blockquote")] // Low priority
         sealed class MarkdownCodeFormat : ClassificationFormatDefinition

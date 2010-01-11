@@ -30,19 +30,41 @@ namespace MarkdownMode
     {
         internal const char _dummyChar = '~';
 
+        // These match the regexes that Markdown.cs uses, *except* that they don't have a lookahead at the end for
+        // either another list item or the end of the string.  Since we both a) don't strip out multiple endlines at the end
+        // of the list, and b) don't actually care which list a given list element belongs to, we can just get rid of that.
+
+        static Regex UlListItemRegex = new Regex(
+            @"(\n)?                      # leading line = $1
+              (^[ \t]*)                  # leading whitespace = $2
+              (" + Markdown.MarkerUL + @") [ \t]+ # list marker = $3
+              ((?s:.+?)                  # list item text = $4
+              (\n{1,}))", RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace | RegexOptions.Multiline);
+
+        static Regex OlListItemRegex = new Regex(@"
+              (\n)?                      # leading line = $1
+              (^[ \t]*)                  # leading whitespace = $2
+              (" + Markdown.MarkerOL + @") [ \t]+ # list marker = $3
+              ((?s:.+?)                  # list item text = $4
+              (\n{1,}))", RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace | RegexOptions.Multiline);
+
         #region Markdown public parser interface
 
         /// <summary>
-        /// Parses the given Markdown-formatted paragraph (a series of non-blank lines).
+        /// Parses the given Markdown-formatted paragraph into tokens.
         /// </summary>
         /// <param name="text">The paragraph of text to parse</param>
+        /// <param name="offset">An optional offset that all the generated tokens will use.</param>
         /// <returns>An enumeration of tokens parsed from the text.</returns>
         public static IEnumerable<Token> ParseMarkdownParagraph(string text, int offset = 0)
         {
             List<Token> tokens = new List<Token>();
 
+            if (text.Trim().Length == 0)
+                return tokens;
+
             // First, write over the html tags with dummy characters so we ignore them
-            text = BlankOutHtmlTags(text);
+            text = DestroyHtmlTags(text);
 
             // Parse the paragraph into parts.  Note that the text will be modified in each step, but
             // characters will not be added or removed (so that the token locations as offsets into the text
@@ -70,7 +92,10 @@ namespace MarkdownMode
 
             return false;
         }
-
+        
+        /// <summary>
+        /// Markdown token types.
+        /// </summary>
         public enum TokenType
         {
             // Bold/italics
@@ -112,6 +137,9 @@ namespace MarkdownMode
             HorizontalRule,
         }
 
+        /// <summary>
+        /// A Markdown token, which is a Span in the given text and an associated token type.
+        /// </summary>
         public struct Token
         {
             public Token(TokenType type, Span span) { TokenType = type; Span = span; }
@@ -122,7 +150,23 @@ namespace MarkdownMode
 
         #endregion
 
-        #region Parser methods
+        #region Parser methods (private)
+
+        static IEnumerable<Token> ParseSpans(ref string text, int offset = 0)
+        {
+            List<Token> tokens = new List<Token>();
+
+            tokens.AddRange(ParseCodeSpans(ref text, offset));
+
+            // Make sure we don't parse backslash-escaped pieces of the text
+            text = DestroyBackslashEscapes(text);
+
+            tokens.AddRange(ParseImages(ref text, offset));
+            tokens.AddRange(ParseAnchors(ref text, offset));
+            tokens.AddRange(ParseItalicsAndBold(ref text, offset));
+
+            return tokens;
+        }
 
         static IEnumerable<Token> ParseCodeBlocks(ref string text, int offset = 0)
         {
@@ -130,22 +174,25 @@ namespace MarkdownMode
 
             text = Markdown.CodeBlockRegex.Replace(text, match =>
                 {
-                    string codeBlock = match.Groups[1].Value;
-
                     tokens.Add(new Token(TokenType.CodeBlock, SpanFromGroup(match.Groups[1])));
 
-                    return DestroyCodeBlock(codeBlock);
+                    return DestroyMarkdownCharsInBlock(match.Value);
                 });
 
             return tokens;
         }
 
-        static Regex MagicMarkdownCharRegex = new Regex(@"[\*_{}[\]]", RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.Compiled);
-
-        static string DestroyCodeBlock(string code)
+        static IEnumerable<Token> ParseCodeSpans(ref string text, int offset = 0)
         {
-            // Destroy characters that are magic in markdown
-            return MagicMarkdownCharRegex.Replace(code, new string(_dummyChar, 1));
+            List<Token> tokens = new List<Token>();
+
+            text = Markdown.CodeSpanRegex.Replace(text, match =>
+            {
+                tokens.Add(new Token(TokenType.CodeBlock, SpanFromGroup(match.Groups[2], offset)));
+                return DestroyMarkdownCharsInBlock(match.Value);
+            });
+
+            return tokens;
         }
 
         static IEnumerable<Token> ParseHorizontalRules(ref string text, int offset = 0)
@@ -190,7 +237,6 @@ namespace MarkdownMode
             return tokens;
         }
 
-
         static IEnumerable<Token> ParseHeaders(ref string text, int offset = 0)
         {
             List<Token> tokens = new List<Token>();
@@ -232,7 +278,9 @@ namespace MarkdownMode
         {
             List<Token> tokens = new List<Token>();
 
-            MatchEvaluator evaluator = match =>
+            Regex regex = (listLevel == 0) ? Markdown.ListTopLevelRegex : Markdown.ListNestedRegex;
+
+            text = regex.Replace(text, match =>
                 {
                     TokenType type = Regex.IsMatch(match.Groups[3].Value, Markdown.MarkerUL) ? 
                                      TokenType.UnorderedListElement : TokenType.OrderedListElement;
@@ -248,19 +296,14 @@ namespace MarkdownMode
                         return match.Value;
                     else
                         return new string(_dummyChar, match.Length);
-                };
-
-            if (listLevel == 0)
-                text = Markdown.ListTopLevelRegex.Replace(text, evaluator);
-            else
-                text = Markdown.ListNestedRegex.Replace(text, evaluator);
+                });
 
             return tokens;
         }
 
         static IEnumerable<Token> ParseListItems(ref string list, int listLevel, TokenType listType, int offset = 0)
         {
-            Regex regex = (listType == TokenType.OrderedListElement) ? Markdown.OlListItemRegex : Markdown.UlListItemRegex;
+            Regex regex = (listType == TokenType.OrderedListElement) ? OlListItemRegex : UlListItemRegex;
 
             List<Token> tokens = new List<Token>();
 
@@ -269,7 +312,6 @@ namespace MarkdownMode
                     // Add a token for the list bullet (like * or 1.)
                     tokens.Add(new Token(listType, SpanFromGroup(match.Groups[3], offset)));
 
-                    // Parse recursively:
                     string item = match.Groups[4].Value;
                     string leadingLine = match.Groups[1].Value;
 
@@ -277,10 +319,11 @@ namespace MarkdownMode
 
                     if (!String.IsNullOrEmpty(leadingLine) || Regex.IsMatch(item, @"\n{2,}"))
                     {
-                        // This is kinda rough - we're going to trim each line and re-parse them as paragraphs
+                        // This is kinda rough - we're going to trim each line and re-parse them as paragraphs.
+                        // This should work for everything but the two-line header format, which we can't have here anyways (I don't think)
                         foreach (var line in Markdown._entireLines.Matches(item).Cast<Match>())
                         {
-                            Match strip = Regex.Match(item, @"^(\t|[ ]{1," + Markdown.TabWidth + @"})(.*)$", RegexOptions.Singleline);
+                            Match strip = Regex.Match(line.Value, @"^(\t|[ ]{1," + Markdown.TabWidth + @"})?(.*)$", RegexOptions.Singleline);
 
                             if (strip.Success)
                             {
@@ -295,45 +338,13 @@ namespace MarkdownMode
                     {
                         // recursion for sub-lists
                         tokens.AddRange(ParseLists(ref item, matchOffset, listLevel + 1));
-                        tokens.AddRange(ParseSpans(ref item, matchOffset));;
+
+                        // Just in case, parse spans on the segment as well.  If ParseLists found sublists, it would
+                        // have blanked them out, so this won't do anything in that case.  If there weren't sublists,
+                        // though, this will take care of subexpressions.
+                        tokens.AddRange(ParseSpans(ref item, matchOffset));
                     }
                 });
-            
-            return tokens;
-        }
-
-        /// <summary>
-        /// Parses the spans in the given text, using the offset provided (as the text is generally
-        /// a substring of the text we started with).
-        /// </summary>
-        static IEnumerable<Token> ParseSpans(ref string text, int offset = 0)
-        {
-            List<Token> tokens = new List<Token>();
-
-            // Code spans
-            tokens.AddRange(ParseCodeSpans(ref text, offset));
-
-            text = DestroyBackslashEscapes(text);
-
-            // For images and anchors, we want to both parse the tokens and replace tokens with junk, since
-            // it shouldn't be further parsed.
-            tokens.AddRange(ParseImages(ref text, offset));
-            tokens.AddRange(ParseAnchors(ref text, offset));
-
-            // Removed DoAutoLinks here, since the default editor URL logic should find them
-
-            // Bold and italics
-            tokens.AddRange(ParseItalicsAndBold(ref text, offset));
-
-            return tokens;
-        }
-        
-        static IEnumerable<Token> ParseCodeSpans(ref string text, int offset = 0)
-        {
-            List<Token> tokens = new List<Token>();
-            
-            foreach (var match in Markdown.CodeSpanRegex.Matches(text).Cast<Match>())
-                tokens.Add(new Token(TokenType.CodeBlock, SpanFromGroup(match.Groups[2], offset)));
             
             return tokens;
         }
@@ -411,9 +422,9 @@ namespace MarkdownMode
         
         #endregion
 
-        #region Little helpers for markdown parsing logic
+        #region Helpers
 
-        static string BlankOutHtmlTags(string text)
+        static string DestroyHtmlTags(string text)
         {
             int pos = 0;
             int tagStart = 0;
@@ -435,6 +446,13 @@ namespace MarkdownMode
                 newText.Append(text.Substring(pos, text.Length - pos));
 
             return newText.ToString();
+        }
+
+        static Regex MagicMarkdownCharRegex = new Regex(@"[\*_{}[\]]", RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.Compiled);
+        static string DestroyMarkdownCharsInBlock(string block)
+        {
+            // Destroy characters that are magic in markdown
+            return MagicMarkdownCharRegex.Replace(block, new string(_dummyChar, 1));
         }
 
         static string DestroyBackslashEscapes(string text)

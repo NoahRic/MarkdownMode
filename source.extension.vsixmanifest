@@ -6,6 +6,7 @@
         <Version>0.1</Version>
         <Description>A language service for editing Markdown files.</Description>
         <Locale>1033</Locale>
+        <InstalledByMsi>false</InstalledByMsi>
         <SupportedProducts>
             <VisualStudio Version="10.0">
                 <Edition>VST_All</Edition>
@@ -17,5 +18,6 @@
     <References />
     <Content>
         <MefComponent>|MarkdownMode|</MefComponent>
+        <VsPackage>|MarkdownMode;PkgdefProjectOutputGroup|</VsPackage>
     </Content>
 </Vsix>

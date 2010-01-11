@@ -5,19 +5,22 @@ namespace MarkdownMode
 {
     static class ContentType
     {
+        public const string Name = "markdown";
+
         [Export]
-        [Name("markdown")]
+        [Name(Name)]
         [DisplayName("Markdown")]
         [BaseDefinition("text")]
+        [BaseDefinition("HTML")]
         public static ContentTypeDefinition MarkdownModeContentType = null;
 
         [Export]
-        [ContentType("markdown")]
+        [ContentType(Name)]
         [FileExtension(".mkd")]
         public static FileExtensionToContentTypeDefinition MkdFileExtension = null;
 
         [Export]
-        [ContentType("markdown")]
+        [ContentType(Name)]
         [FileExtension(".markdown")]
         public static FileExtensionToContentTypeDefinition MarkdownFileExtension = null;
     }

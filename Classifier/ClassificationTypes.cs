@@ -92,7 +92,7 @@ namespace MarkdownMode
         internal static ClassificationTypeDefinition MarkdownPreDefinition = null;
 
         [Export]
-        [Name("markdown.code")]
+        [Name("markdown.block")]
         [BaseDefinition("markdown.pre")]
         internal static ClassificationTypeDefinition MarkdownCodeDefinition = null;
 
