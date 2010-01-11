@@ -442,7 +442,7 @@ namespace MarkdownSharp
 
         internal static Regex CodeBlockRegex = new Regex(string.Format(@"
                     (?:\n\n|\A)
-                    (                        # $1 = the block block -- one or more lines, starting with a space/tab
+                    (                        # $1 = the code block -- one or more lines, starting with a space/tab
                     (?:
                         (?:[ ]{{{0}}} | \t)  # Lines must start with a tab or a tab-width of spaces
                         .*\n+
@@ -455,7 +455,7 @@ namespace MarkdownSharp
         internal static Regex CodeSpanRegex = new Regex(@"
                     (?<!\\)   # Character before opening ` can't be a backslash
                     (`+)      # $1 = Opening run of `
-                    (.+?)     # $2 = The block block
+                    (.+?)     # $2 = The code block
                     (?<!`)
                     \1
                     (?!`)", RegexOptions.IgnorePatternWhitespace | RegexOptions.Singleline | RegexOptions.Compiled);
@@ -1294,7 +1294,7 @@ namespace MarkdownSharp
             codeBlock = Detab(codeBlock);
             codeBlock = _newlinesLeadingTrailing.Replace(codeBlock, "");
 
-            return string.Concat("\n\n<pre><block>", codeBlock, "\n</block></pre>\n\n");
+            return string.Concat("\n\n<pre><code>", codeBlock, "\n</code></pre>\n\n");
         }
 
         /// <summary>
@@ -1309,7 +1309,7 @@ namespace MarkdownSharp
             //
             //        Will translate to:
             //
-            //          <p>Just type <block>foo `bar` baz</block> at the prompt.</p>
+            //          <p>Just type <code>foo `bar` baz</code> at the prompt.</p>
             //
             //        There's no arbitrary limit to the number of backticks you
             //        can use as delimters. If you need three consecutive backticks
@@ -1321,7 +1321,7 @@ namespace MarkdownSharp
             //
             //        Turns to:
             //
-            //          ... type <block>`bar`</block> ...         
+            //          ... type <code>`bar`</code> ...         
             //
 
             return CodeSpanRegex.Replace(text, new MatchEvaluator(CodeSpanEvaluator));
@@ -1334,7 +1334,7 @@ namespace MarkdownSharp
             span = Regex.Replace(span, @"[ \t]*$", ""); // trailing whitespace
             span = EncodeCode(span);
 
-            return string.Concat("<block>", span, "</block>");
+            return string.Concat("<code>", span, "</code>");
         }
 
 

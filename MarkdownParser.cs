@@ -48,16 +48,28 @@ namespace MarkdownMode
               ((?s:.+?)                  # list item text = $4
               ((?:\r\n){1,}|\r{1,}|\n{1,}))", RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace | RegexOptions.Multiline);
 
-        static Regex ParserListTopLevelRegex = new Regex(@"
+        const string ParagraphStartRegexPart = @"
             (?:
                (?<=                       # Starts with two consecutive blank lines (ignore whitespace between them)
                  (?: (?:\r\n) | \r | \n )   
                  [ \t]*
                  (?: (?:\r\n) | \r | \n )
                )
-               |
-               \A(?:\r\n|\r|\n)?)" + Markdown.WholeListRegex,
+               |                          # ... or it starts at the beginning of the string, followed by an optional newline
+               \A(?:\r\n|\r|\n)?)";
+
+        static Regex ParserListTopLevelRegex = new Regex(ParagraphStartRegexPart + Markdown.WholeListRegex,
             RegexOptions.Multiline | RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
+
+        internal static Regex ParserCodeBlockRegex = new Regex(string.Format(ParagraphStartRegexPart + @"
+                    (                        # $1 = the code block -- one or more lines, starting with a space/tab
+                    (?:
+                        (?:[ ]{{{0}}} | \t)  # Lines must start with a tab or a tab-width of spaces
+                        .*\n+
+                    )+
+                    )
+                    ((?=^[ ]{{0,{0}}}\S)|\Z) # Lookahead for non-space at line-start, or end of doc",
+                    Markdown.TabWidth), RegexOptions.Multiline | RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
 
         #region Markdown public parser interface
 
@@ -183,7 +195,7 @@ namespace MarkdownMode
         {
             List<Token> tokens = new List<Token>();
 
-            text = Markdown.CodeBlockRegex.Replace(text, match =>
+            text = ParserCodeBlockRegex.Replace(text, match =>
                 {
                     tokens.Add(new Token(TokenType.CodeBlock, SpanFromGroup(match.Groups[1])));
 
