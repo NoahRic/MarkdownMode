@@ -90,6 +90,7 @@
     <Compile Include="ToolWindow\MarkdownPreviewToolWindow.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="README.markdown" />
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>
@@ -103,6 +104,7 @@
     </VSCTCompile>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="ms-pl.txt" />
     <Content Include="Resources\Images_24bit.bmp" />
   </ItemGroup>
   <ItemGroup>

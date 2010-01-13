@@ -10,7 +10,7 @@ namespace MarkdownMode
         [Export]
         [Name(Name)]
         [DisplayName("Markdown")]
-        [BaseDefinition("text")]
+        [BaseDefinition("plaintext")]
         [BaseDefinition("HTML")]
         public static ContentTypeDefinition MarkdownModeContentType = null;
 

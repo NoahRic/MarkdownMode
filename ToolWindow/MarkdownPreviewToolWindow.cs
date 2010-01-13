@@ -69,19 +69,27 @@ namespace MarkdownMode
         public void SetPreviewContent(object source, string html, string title)
         {
             this.Caption = "Markdown Preview - " + title;
-            scrollBackTo = null;
 
             if (source == CurrentSource)
             {
-                var document = browser.Document as mshtml.IHTMLDocument2;
-                if (document != null)
+                // If the scroll back to already has a value, it means the current content hasn't finished loading yet,
+                // so the current scroll position isn't ready for us to use.  Just use the existing scroll position.
+                if (!scrollBackTo.HasValue)
                 {
-                    var element = document.body as mshtml.IHTMLElement2;
-                    if (element != null)
+                    var document = browser.Document as mshtml.IHTMLDocument2;
+                    if (document != null)
                     {
-                        scrollBackTo = element.scrollTop;
+                        var element = document.body as mshtml.IHTMLElement2;
+                        if (element != null)
+                        {
+                            scrollBackTo = element.scrollTop;
+                        }
                     }
                 }
+            }
+            else
+            {
+                scrollBackTo = null;
             }
 
             CurrentSource = source;
