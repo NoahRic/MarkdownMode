@@ -387,7 +387,7 @@ namespace MarkdownSharp
                 (.+?)       # $2 = Header text
                 [ \t]*
                 \#*         # optional closing #'s (not counted)
-                \n+",
+                (?:\z|\n+)",
             RegexOptions.Multiline | RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
 
 

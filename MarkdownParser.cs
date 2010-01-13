@@ -58,6 +58,8 @@ namespace MarkdownMode
                |                          # ... or it starts at the beginning of the string, followed by an optional newline
                \A(?:\r\n|\r|\n)?)";
 
+        const string ParagraphEndRegexPart = @"(?:(?:(?:\r\n){1,}|\r{1,}|\n{1,})|\Z)";
+
         static Regex ParserListTopLevelRegex = new Regex(ParagraphStartRegexPart + Markdown.WholeListRegex,
             RegexOptions.Multiline | RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
 
@@ -68,8 +70,8 @@ namespace MarkdownMode
                         .*\n+
                     )+
                     )
-                    ((?=^[ ]{{0,{0}}}\S)|\Z) # Lookahead for non-space at line-start, or end of doc",
-                    Markdown.TabWidth), RegexOptions.Multiline | RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
+                    ((?=^[ ]{{0,{0}}}\S)|{1}) # Lookahead for non-space at line-start, or end of doc",
+                    Markdown.TabWidth, ParagraphEndRegexPart), RegexOptions.Multiline | RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
 
         #region Markdown public parser interface
 

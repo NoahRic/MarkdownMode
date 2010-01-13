@@ -13,7 +13,9 @@ Here are the existing features:
  * **Preview tool window**, so you can see live updates of what you are typing
  * **HTML colorization**, for regular HTML elements (that Markdown will just pass through to the output).
 
-All source code is released under the [Ms-PL license](http://www.opensource.org/licenses/ms-pl.html).
+Markdown.cs is released under the MIT license, which can be found in that file, as it is a derivative work of [MarkdownSharp][].
+
+All other source code is released under the [Ms-PL license](http://www.opensource.org/licenses/ms-pl.html).
 
 Thanks to [John Gruber][john-gruber] for giving me permission to use the term Markdown in reference to this extension.
 
