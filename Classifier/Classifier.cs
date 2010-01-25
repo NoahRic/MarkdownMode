@@ -17,6 +17,9 @@ namespace MarkdownMode
         [Import]
         IClassificationTypeRegistryService ClassificationRegistry = null;
 
+        [Import]
+        IClassificationFormatMapService FormatMapService = null;
+
         public IClassifier GetClassifier(ITextBuffer buffer)
         {
             return buffer.Properties.GetOrCreateSingletonProperty(() => new MarkdownClassifier(buffer, ClassificationRegistry));

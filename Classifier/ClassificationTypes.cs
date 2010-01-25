@@ -106,6 +106,11 @@ namespace MarkdownMode
         // Links
 
         [Export]
+        [Name("markdown.label")]
+        [BaseDefinition("markdown")]
+        internal static ClassificationTypeDefinition MarkdownLabel = null;
+
+        [Export]
         [Name("markdown.link")]
         [BaseDefinition("markdown")]
         internal static ClassificationTypeDefinition MarkdownLinkDefinition = null;
@@ -122,6 +127,7 @@ namespace MarkdownMode
 
         [Export]
         [Name("markdown.link.label")]
+        [BaseDefinition("markdown.label")]
         [BaseDefinition("markdown.link")]
         internal static ClassificationTypeDefinition MarkdownLinkLabelDefinition = null;
 
@@ -163,6 +169,12 @@ namespace MarkdownMode
         [Name("markdown.image.alt")]
         [BaseDefinition("markdown.image")]
         internal static ClassificationTypeDefinition MarkdownImageAltDefinition = null;
+
+        [Export]
+        [Name("markdown.image.label")]
+        [BaseDefinition("markdown.label")]
+        [BaseDefinition("markdown.image")]
+        internal static ClassificationTypeDefinition MarkdownImageLabelDefinition = null;
 
         [Export]
         [Name("markdown.image.title")]

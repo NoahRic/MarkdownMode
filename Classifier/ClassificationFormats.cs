@@ -183,11 +183,25 @@ namespace MarkdownMode
         [Name("markdown.link.label")]
         [DisplayName("Markdown link label")]
         [UserVisible(true)]
+        [Order(After = "markdown.link")]
         sealed class MarkdownLinkLabel : ClassificationFormatDefinition
         {
             public MarkdownLinkLabel()
             {
                 this.ForegroundColor = Colors.DeepSkyBlue;
+                this.IsBold = false;
+            }
+        }
+
+        [Export(typeof(EditorFormatDefinition))]
+        [ClassificationType(ClassificationTypeNames = "markdown.url.inline")]
+        [Name("markdown.url.inline")]
+        [Order(After = "markdown.link")]
+        sealed class MarkdownUrl : ClassificationFormatDefinition
+        {
+            public MarkdownUrl()
+            {
+                this.ForegroundColor = Colors.Blue;
                 this.IsBold = false;
             }
         }
@@ -221,6 +235,22 @@ namespace MarkdownMode
                 this.ForegroundColor = Colors.DeepPink;
             }
         }
+
+        [Export(typeof(EditorFormatDefinition))]
+        [ClassificationType(ClassificationTypeNames = "markdown.image.label")]
+        [Name("markdown.image.label")]
+        [DisplayName("Markdown image label")]
+        [UserVisible(true)]
+        [Order(After = "markdown.image")]
+        sealed class MarkdownImageLabel : ClassificationFormatDefinition
+        {
+            public MarkdownImageLabel()
+            {
+                this.ForegroundColor = Colors.DeepSkyBlue;
+                this.IsBold = false;
+            }
+        }
+
         [Export(typeof(EditorFormatDefinition))]
         [ClassificationType(ClassificationTypeNames = "markdown.image.title")]
         [Name("markdown.image.title")]

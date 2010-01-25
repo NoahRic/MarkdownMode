@@ -1,24 +1,27 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Vsix Version="1.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2010">
-    <Identifier Id="MarkdownMode">
-        <Name>MarkdownMode</Name>
-        <Author>Noah Richards</Author>
-        <Version>1.0</Version>
-        <Description>A language service for editing Markdown files.</Description>
-        <Locale>1033</Locale>
-        <InstalledByMsi>false</InstalledByMsi>
-        <License>ms-pl.txt</License>
-        <SupportedProducts>
-            <VisualStudio Version="10.0">
-                <Edition>VST_All</Edition>
-                <Edition>Pro</Edition>
-            </VisualStudio>
-        </SupportedProducts>
-        <SupportedFrameworkRuntimeEdition MinVersion="4.0" MaxVersion="4.0" />
-    </Identifier>
-    <References />
-    <Content>
-        <MefComponent>|MarkdownMode|</MefComponent>
-        <VsPackage>|MarkdownMode;PkgdefProjectOutputGroup|</VsPackage>
-    </Content>
+  <Identifier Id="MarkdownMode">
+    <Name>Markdown Mode</Name>
+    <Author>Noah Richards</Author>
+    <Version>0.1</Version>
+    <Description>A language service for editing Markdown files.</Description>
+    <Locale>1033</Locale>
+    <InstalledByMsi>false</InstalledByMsi>
+    <License>ms-pl-MIT.txt</License>
+    <MoreInfoUrl>http://blogs.msdn.com/noahric</MoreInfoUrl>
+    <PreviewImage>markdown-screenshot.png</PreviewImage>
+    <Icon>markdown-icon.png</Icon>
+    <SupportedProducts>
+      <VisualStudio Version="10.0">
+        <Edition>VST_All</Edition>
+        <Edition>Pro</Edition>
+      </VisualStudio>
+    </SupportedProducts>
+    <SupportedFrameworkRuntimeEdition MinVersion="4.0" MaxVersion="4.0" />
+  </Identifier>
+  <References />
+  <Content>
+    <MefComponent>|MarkdownMode|</MefComponent>
+    <VsPackage>|MarkdownMode;PkgdefProjectOutputGroup|</VsPackage>
+  </Content>
 </Vsix>

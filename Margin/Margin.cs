@@ -76,7 +76,7 @@ namespace MarkdownMode
                     if (package != null)
                     {
                         var window = package.GetMarkdownPreviewToolWindow(true);
-                        ((IVsWindowFrame)window.Frame).Show();
+                        ((IVsWindowFrame)window.Frame).ShowNoActivate();
                     }
                 };
 
