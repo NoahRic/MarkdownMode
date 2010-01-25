@@ -113,6 +113,7 @@
     </Content>
     <Content Include="ms-pl-MIT.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
     <Content Include="Resources\Images_24bit.bmp" />
   </ItemGroup>
