@@ -111,7 +111,7 @@
     <Content Include="markdown-screenshot.png">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <Content Include="ms-pl.txt">
+    <Content Include="ms-pl-MIT.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Resources\Images_24bit.bmp" />
