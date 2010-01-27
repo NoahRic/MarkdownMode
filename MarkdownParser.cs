@@ -482,6 +482,9 @@ namespace MarkdownMode
 
         static string DestroyBackslashEscapes(string text)
         {
+            if (!text.Contains('\\'))
+                return text;
+
             // All the backslash strings are two characters long
             string replacement = new string(_dummyChar, 2);
 
