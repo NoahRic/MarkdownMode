@@ -34,31 +34,37 @@ namespace MarkdownMode
         // either another list item or the end of the string.  Since we both a) don't strip out multiple endlines at the end
         // of the list, and b) don't actually care which list a given list element belongs to, we can just get rid of that.
 
+        const string ParagraphEndRegexPart = @"(?:(?:(?:\r\n){1,}|\r{1,}|\n{1,})|\Z)";
+
+        const string ListItemEndlinePart = @"(?:(?:\r\n){1,2}|\r{1,2}|\n{1,2})";
+        const string EndlinePart = @"(?:(?:\r\n)|\r|\n)";
+
         static Regex UlListItemRegex = new Regex(
             @"(\n)?                      # leading line = $1
               (^[ \t]*)                  # leading whitespace = $2
               (" + Markdown.MarkerUL + @") [ \t]+ # list marker = $3
               ((?s:.+?)                  # list item text = $4
-              ((?:\r\n){1,}|\r{1,}|\n{1,}))", RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace | RegexOptions.Multiline);
+               (" + ListItemEndlinePart + @"))
+              (?= " + EndlinePart + @"* (\z | \2 (" + Markdown.MarkerUL + @") [ \t]+))", RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace | RegexOptions.Multiline);
 
         static Regex OlListItemRegex = new Regex(@"
               (\n)?                      # leading line = $1
               (^[ \t]*)                  # leading whitespace = $2
               (" + Markdown.MarkerOL + @") [ \t]+ # list marker = $3
               ((?s:.+?)                  # list item text = $4
-              ((?:\r\n){1,}|\r{1,}|\n{1,}))", RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace | RegexOptions.Multiline);
+               (" + ListItemEndlinePart + @"))
+              (?= " + EndlinePart + @"* (\z | \2 (" + Markdown.MarkerOL + @") [ \t]+))", RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace | RegexOptions.Multiline);
 
         const string ParagraphStartRegexPart = @"
             (?:
                (?<=                       # Starts with two consecutive blank lines (ignore whitespace between them)
-                 (?: (?:\r\n) | \r | \n )   
+                 " + EndlinePart + @" 
                  [ \t]*
-                 (?: (?:\r\n) | \r | \n )
+                 " + EndlinePart + @"
                )
                |                          # ... or it starts at the beginning of the string, followed by an optional newline
-               \A(?:\r\n|\r|\n)?)";
+               \A" + EndlinePart + @"?)";
 
-        const string ParagraphEndRegexPart = @"(?:(?:(?:\r\n){1,}|\r{1,}|\n{1,})|\Z)";
 
         static Regex ParserListTopLevelRegex = new Regex(ParagraphStartRegexPart + Markdown.WholeListRegex,
             RegexOptions.Multiline | RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
