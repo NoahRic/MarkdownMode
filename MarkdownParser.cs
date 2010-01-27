@@ -30,12 +30,10 @@ namespace MarkdownMode
     {
         internal const char _dummyChar = '~';
 
-        // These match the regexes that Markdown.cs uses, *except* that they don't have a lookahead at the end for
-        // either another list item or the end of the string.  Since we both a) don't strip out multiple endlines at the end
-        // of the list, and b) don't actually care which list a given list element belongs to, we can just get rid of that.
+        // The regexes below are generally copies of regexes in Markdown.cs, except that they have been modified to allow for
+        // endlines other than \n.
 
         const string ParagraphEndRegexPart = @"(?:(?:(?:\r\n){1,}|\r{1,}|\n{1,})|\Z)";
-
         const string ListItemEndlinePart = @"(?:(?:\r\n){1,2}|\r{1,2}|\n{1,2})";
         const string EndlinePart = @"(?:(?:\r\n)|\r|\n)";
 
