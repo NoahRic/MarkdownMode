@@ -3,7 +3,7 @@
   <Identifier Id="MarkdownMode">
     <Name>Markdown Mode</Name>
     <Author>Noah Richards</Author>
-    <Version>0.1</Version>
+    <Version>0.2</Version>
     <Description>A language service for editing Markdown files.</Description>
     <Locale>1033</Locale>
     <InstalledByMsi>false</InstalledByMsi>
