@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.ComponentModel.Composition;
+﻿using System.ComponentModel.Composition;
+using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Utilities;
-using Microsoft.VisualStudio.Text;
-using System.IO;
-using Microsoft.VisualStudio.Shell.Interop;
 
 namespace MarkdownMode
 {
