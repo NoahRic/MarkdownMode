@@ -81,6 +81,7 @@
     <Compile Include="Margin\MarginProvider.cs" />
     <Compile Include="Markdown.cs" />
     <Compile Include="MarkdownParser.cs" />
+    <Compile Include="Outlining\OutliningTagger.cs" />
     <Compile Include="Resources.Designer.cs">
       <DependentUpon>Resources.resx</DependentUpon>
       <AutoGen>True</AutoGen>
