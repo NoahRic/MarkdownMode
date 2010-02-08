@@ -121,6 +121,56 @@ namespace MarkdownMode
 
             return false;
         }
+
+        /// <summary>
+        /// Parse a text snapshot into markdown sections.  This is only part of the markdown parser that is really aware of the editor,
+        /// but it keeps us from re-creating all the "GetLineFromLineNumber"-type methods.
+        /// </summary>
+        /// <param name="snapshot"></param>
+        /// <returns></returns>
+        public static IEnumerable<Token> ParseMarkdownSections(ITextSnapshot snapshot)
+        {
+            string text = snapshot.GetText();
+
+            List<Tuple<int, TokenType>> startPoints =
+                   new List<Tuple<int, TokenType>>(ParseMarkdownParagraph(text).Where(t => IsHeaderToken(t))
+                                                                               .Select(t => Tuple.Create(t.Span.Start, t.TokenType)));
+
+            List<Token> sections = new List<Token>();
+            Stack<Tuple<int, TokenType>> regions = new Stack<Tuple<int, TokenType>>();
+
+            foreach (var start in startPoints)
+            {
+                int previousLineNumber = Math.Max(0, snapshot.GetLineNumberFromPosition(start.Item1) - 1);
+                int end = snapshot.GetLineFromLineNumber(previousLineNumber).End;
+
+                while (regions.Count > 0 && regions.Peek().Item2 >= start.Item2)
+                {
+                    var region = regions.Pop();
+                    var span = Span.FromBounds(region.Item1, end);
+                    sections.Add(new Token(region.Item2, span));
+                }
+
+                regions.Push(start);
+            }
+
+            while (regions.Count > 0)
+            {
+                var region = regions.Pop();
+                var span = Span.FromBounds(region.Item1, snapshot.Length);
+                sections.Add(new Token(region.Item2, span));
+            }
+
+            sections.Sort((left, right) =>
+                {
+                    if (left.Span.Start != right.Span.Start)
+                        return left.Span.Start.CompareTo(right.Span.Start);
+
+                    return right.Span.Length.CompareTo(left.Span.Length);
+                });
+
+            return sections;
+        }
         
         /// <summary>
         /// Markdown token types.
@@ -452,6 +502,11 @@ namespace MarkdownMode
         #endregion
 
         #region Helpers
+
+        static bool IsHeaderToken(MarkdownParser.Token token)
+        {
+            return token.TokenType >= MarkdownParser.TokenType.H1 && token.TokenType <= MarkdownParser.TokenType.H6;
+        }
 
         static string DestroyHtmlTags(string text)
         {

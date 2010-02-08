@@ -31,73 +31,27 @@ namespace MarkdownMode
         ITextBuffer _buffer;
 
         List<MarkdownSection> _sections;
-        DispatcherTimer _timer;
 
         public OutliningTagger(ITextBuffer buffer)
         {
             _buffer = buffer;
             _sections = new List<MarkdownSection>();
 
-            TriggerReparse();
-
-            _buffer.Changed += (sender, args) => TriggerReparse();
+            ReparseFile(null, EventArgs.Empty);
+            BufferIdleEventUtil.AddBufferIdleEventListener(buffer, ReparseFile);
         }
 
-        void TriggerReparse()
-        {
-            if (_timer == null)
-            {
-                _timer = new DispatcherTimer(DispatcherPriority.ApplicationIdle)
-                {
-                    Interval = TimeSpan.FromMilliseconds(500)
-                };
-
-                _timer.Tick += (sender, args) =>
-                    {
-                        _timer.Stop();
-                        ReparseFile();
-                    };
-            }
-
-            _timer.Stop();
-            _timer.Start();
-        }
-
-        void ReparseFile()
+        void ReparseFile(object sender, EventArgs args)
         {
             ITextSnapshot snapshot = _buffer.CurrentSnapshot;
 
-            string text = snapshot.GetText();
-
-            List<Tuple<int, MarkdownParser.TokenType>> startPoints = 
-                new List<Tuple<int, MarkdownParser.TokenType>>(MarkdownParser.ParseMarkdownParagraph(text)
-                                                                             .Where(t => IsHeaderToken(t))
-                                                                             .Select(t => Tuple.Create(t.Span.Start, t.TokenType)));
-
-            List<MarkdownSection> newSections = new List<MarkdownSection>();
-            Stack<Tuple<int, MarkdownParser.TokenType>> regions = new Stack<Tuple<int,MarkdownParser.TokenType>>();
-
-            foreach (var start in startPoints)
-            {
-                int previousLineNumber = Math.Max(0, snapshot.GetLineNumberFromPosition(start.Item1) - 1);
-                int end = snapshot.GetLineFromLineNumber(previousLineNumber).End;
-
-                while(regions.Count > 0 && regions.Peek().Item2 >= start.Item2)
-                {
-                    var region = regions.Pop();
-                    var trackingSpan = snapshot.CreateTrackingSpan(Span.FromBounds(region.Item1, end), SpanTrackingMode.EdgeExclusive);
-                    newSections.Add(new MarkdownSection() { TokenType = region.Item2, Span = trackingSpan });
-                }
-
-                regions.Push(start);
-            }
-
-            while (regions.Count > 0)
-            {
-                var region = regions.Pop();
-                var trackingSpan = snapshot.CreateTrackingSpan(Span.FromBounds(region.Item1, snapshot.Length), SpanTrackingMode.EdgeExclusive);
-                newSections.Add(new MarkdownSection() { TokenType = region.Item2, Span = trackingSpan });
-            }
+            List<MarkdownSection> newSections = new List<MarkdownSection>(
+                MarkdownParser.ParseMarkdownSections(snapshot)
+                              .Select(t => new MarkdownSection()
+                              {
+                                  TokenType = t.TokenType,
+                                  Span = snapshot.CreateTrackingSpan(t.Span, SpanTrackingMode.EdgeExclusive)
+                              }));
 
             // For now, just dirty the entire file
             _sections = newSections;
@@ -105,11 +59,6 @@ namespace MarkdownMode
             var temp = TagsChanged;
             if (temp != null)
                 temp(this, new SnapshotSpanEventArgs(new SnapshotSpan(snapshot, 0, snapshot.Length)));
-        }
-
-        static bool IsHeaderToken(MarkdownParser.Token token)
-        {
-            return token.TokenType >= MarkdownParser.TokenType.H1 && token.TokenType <= MarkdownParser.TokenType.H6;
         }
 
         public IEnumerable<ITagSpan<IOutliningRegionTag>> GetTags(NormalizedSnapshotSpanCollection spans)
@@ -143,8 +92,7 @@ namespace MarkdownMode
 
         public void Dispose()
         {
-            if (_timer != null)
-                _timer.Stop();
+            BufferIdleEventUtil.RemoveBufferIdleEventListener(_buffer, ReparseFile);
         }
     }
 }
