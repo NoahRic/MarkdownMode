@@ -11,60 +11,28 @@ using System.Windows.Threading;
 using System.Threading;
 using System.IO;
 using Microsoft.VisualStudio.Shell.Interop;
+using System.Diagnostics;
 
 namespace MarkdownMode
 {
     sealed class Margin : StackPanel, IWpfTextViewMargin
     {
-        public const string Name = "MarkdownMargin";
+        public const string MarginName = "MarkdownMargin";
         
         IWpfTextView textView;
-        ITextDocument document;
-        DispatcherTimer timer;
         MarkdownPackage package;
+
+        List<MarkdownSection> sections;
 
         MarkdownSharp.Markdown markdownTransform = new MarkdownSharp.Markdown();
 
-        MarkdownPreviewToolWindow GetPreviewWindow(bool create)
-        {
-            return (package != null) ? package.GetMarkdownPreviewToolWindow(create) : null;
-        }
+        ComboBox sectionCombo;
+        bool ignoreComboChange = false;
 
-        string GetHTMLText(bool extraSpace = false)
-        {
-            StringBuilder html = new StringBuilder(markdownTransform.Transform(textView.TextBuffer.CurrentSnapshot.GetText()));
-            if (extraSpace)
-            {
-                for (int i = 0; i < 20; i++)
-                    html.Append("<br />");
-            }
-
-            return html.ToString();
-        }
-
-        public Margin(IWpfTextView wpfTextView, MarkdownPackage package, ITextDocument document)
+        public Margin(IWpfTextView wpfTextView, MarkdownPackage package)
         {
             this.textView = wpfTextView;
             this.package = package;
-            this.timer = null;
-            this.document = document;
-
-            textView.GotAggregateFocus += (sender, args) => 
-                {
-                    var window = GetPreviewWindow(false);
-                    if (window != null)
-                    {
-                        if (window.CurrentSource == null || window.CurrentSource != this)
-                            UpdatePreviewWindow(false);
-                    }
-                };
-
-            textView.Closed += (sender, args) => ClearPreviewWindow();
-
-            if (textView.HasAggregateFocus)
-                UpdatePreviewWindow(false);
-
-            textView.TextBuffer.Changed += BufferChanged;
 
             this.Orientation = System.Windows.Controls.Orientation.Horizontal;
             this.Background = Brushes.SlateGray;
@@ -89,72 +57,134 @@ namespace MarkdownMode
                 };
 
             this.Children.Add(copyHtml);
-        }
 
-        string GetDocumentName()
-        {
-            if (document == null)
-                return "(no name)";
-            else
-                return Path.GetFileName(document.FilePath);
-        }
-
-        void BufferChanged(object sender, TextContentChangedEventArgs args)
-        {
-            if (timer != null)
-            {
-                timer.Stop();
-                timer = null;
-            }
-
-            timer = new DispatcherTimer(DispatcherPriority.ApplicationIdle)
-            {
-                Interval = TimeSpan.FromMilliseconds(500)
-            };
-
-            timer.Tick += (s, e) =>
+            sectionCombo = new ComboBox();
+            sectionCombo.SelectionChanged += (sender, args) =>
                 {
-                    if (timer != null)
-                        timer.Stop();
-                    timer = null;
+                    if (ignoreComboChange)
+                        return;
 
-                    UpdatePreviewWindow(async: true);
-                };
+                    ITextSnapshot snapshot = textView.TextSnapshot;
 
-            timer.Start();
-        }
+                    int selectedIndex = sectionCombo.SelectedIndex;
 
-        void UpdatePreviewWindow(bool async)
-        {
-            if (async)
-            {
-                ThreadPool.QueueUserWorkItem(state =>
+                    if (selectedIndex == 0)
                     {
-                        string content = GetHTMLText(extraSpace: true);
+                        NavigateTo(new SnapshotPoint(snapshot, 0));
+                    }
+                    else
+                    {
+                        selectedIndex--;
 
-                        this.Dispatcher.Invoke(new Action(() =>
-                            {
-                                var previewWindow = GetPreviewWindow(create: true);
+                        if (selectedIndex >= sections.Count)
+                        {
+                            Debug.Fail("An item in the combo was selected that isn't a valid section.");
+                            return;
+                        }
 
-                                if (previewWindow.CurrentSource == this || previewWindow.CurrentSource == null)
-                                    previewWindow.SetPreviewContent(this, content, GetDocumentName());
-                            }), DispatcherPriority.ApplicationIdle);
-                    });
-            }
-            else
-            {
-                var previewWindow = GetPreviewWindow(create: true);
-                if (previewWindow != null)
-                    previewWindow.SetPreviewContent(this, GetHTMLText(extraSpace: true), GetDocumentName());
-            }
+                        NavigateTo(sections[selectedIndex].Span.GetStartPoint(snapshot));
+                    }
+                };
+            RefreshComboItems(null, EventArgs.Empty);
+
+            this.Children.Add(sectionCombo);
+
+            BufferIdleEventUtil.AddBufferIdleEventListener(textView.TextBuffer, RefreshComboItems);
+            textView.Closed += (sender, args) => BufferIdleEventUtil.RemoveBufferIdleEventListener(textView.TextBuffer, RefreshComboItems);
+
+            textView.Caret.PositionChanged += (sender, args) => SetSectionComboToCaretPosition();
         }
 
-        void ClearPreviewWindow()
+        void NavigateTo(SnapshotPoint point)
         {
-            var window = GetPreviewWindow(create: false);
-            if (window != null && window.CurrentSource == this)
-                window.ClearPreviewContent();
+            textView.Selection.Clear();
+            textView.Caret.MoveTo(point);
+
+            textView.ViewScroller.EnsureSpanVisible(textView.Selection.StreamSelectionSpan.SnapshotSpan, EnsureSpanVisibleOptions.AlwaysCenter);
+
+            textView.VisualElement.Focus();
         }
+
+        void SetSectionComboToCaretPosition()
+        {
+            try
+            {
+                ignoreComboChange = true;
+
+                int currentItem = 0;
+
+                for (int i = 0; i < sections.Count; i++)
+                {
+                    var span = sections[i].Span.GetSpan(textView.TextSnapshot);
+                    
+                    if (span.Contains(textView.Selection.Start.Position))
+                        currentItem = i + 1;
+                    else
+                        break;
+                }
+
+                sectionCombo.SelectedIndex = currentItem;
+            }
+            finally
+            {
+                ignoreComboChange = false;
+            }
+        }
+
+        void RefreshComboItems(object sender, EventArgs args)
+        {
+            try
+            {
+                ignoreComboChange = true;
+
+                ITextSnapshot snapshot = textView.TextBuffer.CurrentSnapshot;
+
+                sections = new List<MarkdownSection>(
+                    MarkdownParser.ParseMarkdownSections(snapshot)
+                                  .Select(t => new MarkdownSection()
+                                  {
+                                      TokenType = t.TokenType,
+                                      Span = snapshot.CreateTrackingSpan(t.Span, SpanTrackingMode.EdgeExclusive)
+                                  }));
+
+                sectionCombo.Items.Clear();
+
+                // First, add an item for "Top of the file"
+                sectionCombo.Items.Add(" (Top of file)");
+
+                foreach (var section in sections)
+                {
+                    var lineText = section.Span.GetStartPoint(snapshot).GetContainingLine().GetText().TrimStart(' ', '\t', '#');
+                    string spaces = new string('-', section.TokenType - MarkdownParser.TokenType.H1);
+                    string comboText = string.Format("{0}{1}", spaces, lineText);
+
+                    sectionCombo.Items.Add(comboText);
+                }
+            }
+            finally
+            {
+                ignoreComboChange = false;
+            }
+        }
+
+        MarkdownPreviewToolWindow GetPreviewWindow(bool create)
+        {
+            return (package != null) ? package.GetMarkdownPreviewToolWindow(create) : null;
+        }
+
+        string GetHTMLText(bool extraSpace = false)
+        {
+            StringBuilder html = new StringBuilder(markdownTransform.Transform(textView.TextBuffer.CurrentSnapshot.GetText()));
+            if (extraSpace)
+            {
+                for (int i = 0; i < 20; i++)
+                    html.Append("<br />");
+            }
+
+            return html.ToString();
+        }
+
+        #region IWpfTextViewMargin members
 
         public FrameworkElement VisualElement
         {
@@ -168,7 +198,7 @@ namespace MarkdownMode
 
         public ITextViewMargin GetTextViewMargin(string marginName)
         {
-            return (marginName == Name) ? this : null;
+            return (marginName == MarginName) ? this : null;
         }
 
         public double MarginSize
@@ -180,5 +210,7 @@ namespace MarkdownMode
         {
             // Nothing to see here.  Move along.
         }
+
+        #endregion
     }
 }

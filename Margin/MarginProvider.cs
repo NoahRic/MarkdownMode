@@ -7,7 +7,7 @@ using Microsoft.VisualStudio.Utilities;
 namespace MarkdownMode
 {
     [Export(typeof(IWpfTextViewMarginProvider))]
-    [Name(Margin.Name)]
+    [Name(Margin.MarginName)]
     [MarginContainer(PredefinedMarginNames.Top)]
     [TextViewRole(PredefinedTextViewRoles.Document)]
     [ContentType(ContentType.Name)]
@@ -18,12 +18,6 @@ namespace MarkdownMode
 
         public IWpfTextViewMargin CreateMargin(IWpfTextViewHost wpfTextViewHost, IWpfTextViewMargin marginContainer)
         {
-            ITextDocument document;
-            if (!wpfTextViewHost.TextView.TextDataModel.DocumentBuffer.Properties.TryGetProperty(typeof(ITextDocument), out document))
-            {
-                document = null;
-            }
-
             MarkdownPackage package = null;
 
             // If there is a shell service (which there should be, in VS), force the markdown package to load
@@ -31,7 +25,7 @@ namespace MarkdownMode
             if (shell != null)
                 package = MarkdownPackage.ForceLoadPackage(shell);
 
-            return new Margin(wpfTextViewHost.TextView, package, document);
+            return new Margin(wpfTextViewHost.TextView, package);
         }
     }
 }

@@ -73,6 +73,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BufferIdleEventUtil.cs" />
     <Compile Include="Classifier\ClassificationFormats.cs" />
     <Compile Include="Classifier\ClassificationTypes.cs" />
     <Compile Include="Classifier\Classifier.cs" />
@@ -88,8 +89,9 @@
       <DesignTime>True</DesignTime>
     </Compile>
     <Compile Include="ToolWindow\Guids.cs" />
-    <Compile Include="ToolWindow\MarkdownPackage.cs" />
-    <Compile Include="ToolWindow\MarkdownPreviewToolWindow.cs" />
+    <Compile Include="ToolWindow\PreviewWindowUpdateListener.cs" />
+    <Compile Include="ToolWindow\Package.cs" />
+    <Compile Include="ToolWindow\PreviewToolWindow.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.markdown" />
@@ -101,7 +103,7 @@
     <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <VSCTCompile Include="ToolWindow\MarkdownPackage.vsct">
+    <VSCTCompile Include="ToolWindow\Package.vsct">
       <ResourceName>1000</ResourceName>
     </VSCTCompile>
   </ItemGroup>
