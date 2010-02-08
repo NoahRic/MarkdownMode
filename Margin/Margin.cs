@@ -113,14 +113,15 @@ namespace MarkdownMode
 
                 int currentItem = 0;
 
-                for (int i = 0; i < sections.Count; i++)
+                for (int i = sections.Count - 1; i >= 0; i--)
                 {
                     var span = sections[i].Span.GetSpan(textView.TextSnapshot);
-                    
+
                     if (span.Contains(textView.Selection.Start.Position))
+                    {
                         currentItem = i + 1;
-                    else
                         break;
+                    }
                 }
 
                 sectionCombo.SelectedIndex = currentItem;
@@ -160,6 +161,8 @@ namespace MarkdownMode
 
                     sectionCombo.Items.Add(comboText);
                 }
+
+                SetSectionComboToCaretPosition();
             }
             finally
             {
