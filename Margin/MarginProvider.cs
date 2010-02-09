@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Utilities;
+using Microsoft.VisualStudio.Shell;
 
 namespace MarkdownMode
 {
@@ -14,7 +15,7 @@ namespace MarkdownMode
     sealed class MarginProvider : IWpfTextViewMarginProvider
     {
         [Import]
-        System.IServiceProvider GlobalServiceProvider = null;
+        SVsServiceProvider GlobalServiceProvider = null;
 
         public IWpfTextViewMargin CreateMargin(IWpfTextViewHost wpfTextViewHost, IWpfTextViewMargin marginContainer)
         {

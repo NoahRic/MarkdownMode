@@ -14,7 +14,7 @@ namespace MarkdownMode
         [BaseDefinition("HTML")]
         public static ContentTypeDefinition MarkdownModeContentType = null;
 
-        // Beta 2 workaround:
+        // Pre-RTM workaround:
         // We need to also explicitly declare HTML, or else our declaration will cause HTML to break
         [Export]
         [Name("HTML")]

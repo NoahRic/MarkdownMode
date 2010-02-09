@@ -13,6 +13,7 @@ using System.IO;
 using Microsoft.VisualStudio.Shell.Interop;
 using System.ComponentModel.Composition;
 using Microsoft.VisualStudio.Utilities;
+using Microsoft.VisualStudio.Shell;
 
 namespace MarkdownMode
 {
@@ -23,7 +24,7 @@ namespace MarkdownMode
     sealed class PreviewWindowViewCreationListener : IWpfTextViewCreationListener
     {
         [Import]
-        System.IServiceProvider GlobalServiceProvider = null;
+        SVsServiceProvider GlobalServiceProvider = null;
 
         public void  TextViewCreated(IWpfTextView textView)
         {
