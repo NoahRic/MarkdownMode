@@ -53,12 +53,28 @@ namespace MarkdownMode
                                   Span = snapshot.CreateTrackingSpan(t.Span, SpanTrackingMode.EdgeExclusive)
                               }));
 
-            // For now, just dirty the entire file
+            NormalizedSnapshotSpanCollection oldSectionSpans = new NormalizedSnapshotSpanCollection(
+                _sections.Select(s => s.Span.GetSpan(snapshot)));
+            NormalizedSnapshotSpanCollection newSectionSpans = new NormalizedSnapshotSpanCollection(
+                newSections.Select(s => s.Span.GetSpan(snapshot)));
+
+            NormalizedSnapshotSpanCollection difference = SymmetricDifference(oldSectionSpans, newSectionSpans);
+
             _sections = newSections;
 
-            var temp = TagsChanged;
-            if (temp != null)
-                temp(this, new SnapshotSpanEventArgs(new SnapshotSpan(snapshot, 0, snapshot.Length)));
+            foreach (var span in difference)
+            {
+                var temp = TagsChanged;
+                if (temp != null)
+                    temp(this, new SnapshotSpanEventArgs(span));
+            }
+        }
+
+        NormalizedSnapshotSpanCollection SymmetricDifference(NormalizedSnapshotSpanCollection first, NormalizedSnapshotSpanCollection second)
+        {
+            return NormalizedSnapshotSpanCollection.Union(
+                NormalizedSnapshotSpanCollection.Difference(first, second),
+                NormalizedSnapshotSpanCollection.Difference(second, first));
         }
 
         public IEnumerable<ITagSpan<IOutliningRegionTag>> GetTags(NormalizedSnapshotSpanCollection spans)
