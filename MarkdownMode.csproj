@@ -88,6 +88,7 @@
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
     </Compile>
+    <Compile Include="SpellcheckSupport\MarkdownNaturalTextTagger.cs" />
     <Compile Include="ToolWindow\Guids.cs" />
     <Compile Include="ToolWindow\PreviewWindowUpdateListener.cs" />
     <Compile Include="ToolWindow\Package.cs" />
@@ -127,6 +128,12 @@
       <SubType>Designer</SubType>
       <MergeWithCTO>true</MergeWithCTO>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="Spellchecker\SpellChecker.Definitions\SpellChecker.Definitions.csproj">
+      <Project>{87D22AC6-424B-48DD-A5E8-DCB7CB3DDD63}</Project>
+      <Name>SpellChecker.Definitions</Name>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
     <RegisterOutputPackage>true</RegisterOutputPackage>
