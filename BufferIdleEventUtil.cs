@@ -9,8 +9,8 @@ namespace MarkdownMode
 {
     static class BufferIdleEventUtil
     {
-        static Dictionary<ITextBuffer, HashSet<EventHandler>> bufferListeners
-            = new Dictionary<ITextBuffer, HashSet<EventHandler>>();
+        static object bufferListenersKey = new object();
+
         static Dictionary<ITextBuffer, DispatcherTimer> bufferTimers
             = new Dictionary<ITextBuffer, DispatcherTimer>();
 
@@ -19,7 +19,7 @@ namespace MarkdownMode
         public static bool AddBufferIdleEventListener(ITextBuffer buffer, EventHandler handler)
         {
             HashSet<EventHandler> listenersForBuffer;
-            if (!bufferListeners.TryGetValue(buffer, out listenersForBuffer))
+            if (!buffer.Properties.TryGetProperty(bufferListenersKey, out listenersForBuffer))
                 listenersForBuffer = ConnectToBuffer(buffer);
 
             if (listenersForBuffer.Contains(handler))
@@ -33,7 +33,7 @@ namespace MarkdownMode
         public static bool RemoveBufferIdleEventListener(ITextBuffer buffer, EventHandler handler)
         {
             HashSet<EventHandler> listenersForBuffer;
-            if (!bufferListeners.TryGetValue(buffer, out listenersForBuffer))
+            if (!buffer.Properties.TryGetProperty(bufferListenersKey, out listenersForBuffer))
                 return false;
 
             if (!listenersForBuffer.Contains(handler))
@@ -62,7 +62,7 @@ namespace MarkdownMode
                 bufferTimers.Remove(buffer);
             }
 
-            bufferListeners.Remove(buffer);
+            buffer.Properties.RemoveProperty(bufferListenersKey);
         }
 
         static HashSet<EventHandler> ConnectToBuffer(ITextBuffer buffer)
@@ -72,7 +72,7 @@ namespace MarkdownMode
             RestartTimerForBuffer(buffer);
 
             HashSet<EventHandler> listenersForBuffer = new HashSet<EventHandler>();
-            bufferListeners[buffer] = listenersForBuffer;
+            buffer.Properties[bufferListenersKey] = listenersForBuffer;
 
             return listenersForBuffer;
         }
@@ -98,7 +98,7 @@ namespace MarkdownMode
                         timer.Stop();
 
                     HashSet<EventHandler> handlers;
-                    if (bufferListeners.TryGetValue(buffer, out handlers))
+                    if (buffer.Properties.TryGetProperty(bufferListenersKey, out handlers))
                     {
                         foreach (var handler in handlers)
                         {
