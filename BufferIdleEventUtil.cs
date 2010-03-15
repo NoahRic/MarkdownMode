@@ -10,16 +10,14 @@ namespace MarkdownMode
     static class BufferIdleEventUtil
     {
         static object bufferListenersKey = new object();
-
-        static Dictionary<ITextBuffer, DispatcherTimer> bufferTimers
-            = new Dictionary<ITextBuffer, DispatcherTimer>();
+        static object bufferTimerKey = new object();
 
         #region Public interface
 
         public static bool AddBufferIdleEventListener(ITextBuffer buffer, EventHandler handler)
         {
             HashSet<EventHandler> listenersForBuffer;
-            if (!buffer.Properties.TryGetProperty(bufferListenersKey, out listenersForBuffer))
+            if (!TryGetBufferListeners(buffer, out listenersForBuffer))
                 listenersForBuffer = ConnectToBuffer(buffer);
 
             if (listenersForBuffer.Contains(handler))
@@ -33,7 +31,7 @@ namespace MarkdownMode
         public static bool RemoveBufferIdleEventListener(ITextBuffer buffer, EventHandler handler)
         {
             HashSet<EventHandler> listenersForBuffer;
-            if (!buffer.Properties.TryGetProperty(bufferListenersKey, out listenersForBuffer))
+            if (!TryGetBufferListeners(buffer, out listenersForBuffer))
                 return false;
 
             if (!listenersForBuffer.Contains(handler))
@@ -51,16 +49,38 @@ namespace MarkdownMode
 
         #region Helpers
 
+        static bool TryGetBufferListeners(ITextBuffer buffer, out HashSet<EventHandler> listeners)
+        {
+            return buffer.Properties.TryGetProperty(bufferListenersKey, out listeners);
+        }
+
+        static void ClearBufferListeners(ITextBuffer buffer)
+        {
+            buffer.Properties.RemoveProperty(bufferListenersKey);
+        }
+
+        static bool TryGetBufferTimer(ITextBuffer buffer, out DispatcherTimer timer)
+        {
+            return buffer.Properties.TryGetProperty(bufferTimerKey, out timer);
+        }
+
+        static void ClearBufferTimer(ITextBuffer buffer)
+        {
+            DispatcherTimer timer;
+            if (TryGetBufferTimer(buffer, out timer))
+            {
+                if (timer != null)
+                    timer.Stop();
+                buffer.Properties.RemoveProperty(bufferTimerKey);
+            }
+        }
+
         static void DisconnectFromBuffer(ITextBuffer buffer)
         {
             buffer.Changed -= BufferChanged;
 
-            DispatcherTimer timer;
-            if (bufferTimers.TryGetValue(buffer, out timer))
-            {
-                timer.Stop();
-                bufferTimers.Remove(buffer);
-            }
+            ClearBufferListeners(buffer);
+            ClearBufferTimer(buffer);
 
             buffer.Properties.RemoveProperty(bufferListenersKey);
         }
@@ -81,7 +101,7 @@ namespace MarkdownMode
         {
             DispatcherTimer timer;
 
-            if (bufferTimers.TryGetValue(buffer, out timer))
+            if (TryGetBufferTimer(buffer, out timer))
             {
                 timer.Stop();
             }
@@ -94,11 +114,10 @@ namespace MarkdownMode
 
                 timer.Tick += (s, e) =>
                 {
-                    if (timer != null)
-                        timer.Stop();
+                    ClearBufferTimer(buffer);
 
                     HashSet<EventHandler> handlers;
-                    if (buffer.Properties.TryGetProperty(bufferListenersKey, out handlers))
+                    if (TryGetBufferListeners(buffer, out handlers))
                     {
                         foreach (var handler in handlers)
                         {
@@ -107,7 +126,7 @@ namespace MarkdownMode
                     }
                 };
 
-                bufferTimers[buffer] = timer;
+                buffer.Properties[bufferTimerKey] = timer;
             }
 
             timer.Start();
