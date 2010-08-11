@@ -27,6 +27,21 @@ namespace MarkdownMode
 
         [Export]
         [ContentType(Name)]
+        [FileExtension(".md")]
+        public static FileExtensionToContentTypeDefinition MdFileExtension = null;
+
+        [Export]
+        [ContentType(Name)]
+        [FileExtension(".mdown")]
+        public static FileExtensionToContentTypeDefinition MdownFileExtension = null;
+
+        [Export]
+        [ContentType(Name)]
+        [FileExtension(".mkdn")]
+        public static FileExtensionToContentTypeDefinition MkdnFileExtension = null;
+
+        [Export]
+        [ContentType(Name)]
         [FileExtension(".markdown")]
         public static FileExtensionToContentTypeDefinition MarkdownFileExtension = null;
     }
