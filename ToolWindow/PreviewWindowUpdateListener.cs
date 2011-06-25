@@ -64,12 +64,15 @@ namespace MarkdownMode
 
         string GetHTMLText(bool extraSpace = false)
         {
-            StringBuilder html = new StringBuilder(markdownTransform.Transform(textView.TextBuffer.CurrentSnapshot.GetText()));
+            StringBuilder html = new StringBuilder();
+            html.AppendLine("<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"></head><body>");
+            html.AppendLine(markdownTransform.Transform(textView.TextBuffer.CurrentSnapshot.GetText()));
             if (extraSpace)
             {
                 for (int i = 0; i < 20; i++)
                     html.Append("<br />");
             }
+            html.AppendLine("</body></html>");
 
             return html.ToString();
         }
