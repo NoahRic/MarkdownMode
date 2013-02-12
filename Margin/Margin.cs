@@ -19,8 +19,8 @@ namespace MarkdownMode
     {
         public const string MarginName = "MarkdownMargin";
         
-        IWpfTextView textView;
-        MarkdownPackage package;
+        readonly IWpfTextView textView;
+        readonly MarkdownPackage package;
 
         List<MarkdownSection> sections;
 

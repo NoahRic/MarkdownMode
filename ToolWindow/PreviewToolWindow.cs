@@ -14,7 +14,7 @@ namespace MarkdownMode
     [Guid("acd82a5f-9c35-400b-b9d0-f97925f3b312")]
     public class MarkdownPreviewToolWindow : ToolWindowPane
     {
-        private WebBrowser browser;
+        private readonly WebBrowser browser;
 
         const string EmptyWindowHtml = "Open a markdown file to see a preview.";
         int? scrollBackTo = null;

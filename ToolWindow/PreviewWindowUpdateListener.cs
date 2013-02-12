@@ -52,13 +52,13 @@ namespace MarkdownMode
     {
         public const string Name = "MarkdownMargin";
         
-        IWpfTextView textView;
-        ITextDocument document;
-        MarkdownPackage package;
+        readonly IWpfTextView textView;
+        readonly ITextDocument document;
+        readonly MarkdownPackage package;
 
-        EventHandler updateHandler;
+        readonly EventHandler updateHandler;
 
-        MarkdownSharp.Markdown markdownTransform = new MarkdownSharp.Markdown();
+        readonly MarkdownSharp.Markdown markdownTransform = new MarkdownSharp.Markdown();
 
         MarkdownPreviewToolWindow GetPreviewWindow(bool create)
         {

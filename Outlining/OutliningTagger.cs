@@ -28,7 +28,7 @@ namespace MarkdownMode
 
     sealed class OutliningTagger : ITagger<IOutliningRegionTag>, IDisposable
     {
-        ITextBuffer _buffer;
+        readonly ITextBuffer _buffer;
 
         List<MarkdownSection> _sections;
 
