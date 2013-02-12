@@ -16,6 +16,10 @@ namespace MarkdownMode
     {
         private readonly WebBrowser browser;
 
+        object source;
+        string html;
+        string title;
+
         const string EmptyWindowHtml = "Open a markdown file to see a preview.";
         int? scrollBackTo = null;
 
@@ -48,6 +52,7 @@ namespace MarkdownMode
 
                 scrollBackTo = null;
             };
+            browser.IsVisibleChanged += HandleBrowserIsVisibleChanged;
         }
 
         public override object Content
@@ -55,22 +60,49 @@ namespace MarkdownMode
             get { return browser; }
         }
 
-        bool isVisible = false;
         public bool IsVisible
         {
-            get { return isVisible; }
+            get { return browser != null && browser.IsVisible; }
         }
 
-        public override void OnToolWindowCreated()
+        public object CurrentSource
         {
-            isVisible = true;
+            get
+            {
+                return source;
+            }
+        }
+
+        void HandleBrowserIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            bool visible = (bool)e.NewValue;
+            if (visible)
+            {
+                object source = this.source;
+                this.source = null;
+                SetPreviewContent(source, html, title);
+            }
         }
 
         public void SetPreviewContent(object source, string html, string title)
         {
+            if (string.IsNullOrEmpty(html) && string.IsNullOrEmpty(title))
+            {
+                ClearPreviewContent();
+                return;
+            }
+
+            bool sameSource = source == this.source;
+            this.source = source;
+            this.html = html;
+            this.title = title;
+
+            if (!IsVisible)
+                return;
+
             this.Caption = "Markdown Preview - " + title;
 
-            if (source == CurrentSource)
+            if (sameSource)
             {
                 // If the scroll back to already has a value, it means the current content hasn't finished loading yet,
                 // so the current scroll position isn't ready for us to use.  Just use the existing scroll position.
@@ -92,7 +124,6 @@ namespace MarkdownMode
                 scrollBackTo = null;
             }
 
-            CurrentSource = source;
             browser.NavigateToString(html);
         }
 
@@ -100,11 +131,11 @@ namespace MarkdownMode
         {
             this.Caption = "Markdown Preview";
             scrollBackTo = null;
-            CurrentSource = null;
+            source = null;
+            html = string.Empty;
+            title = string.Empty;
 
             browser.NavigateToString(EmptyWindowHtml);
         }
-
-        public object CurrentSource { get; private set; }
     }
 }
