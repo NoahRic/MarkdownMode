@@ -9,189 +9,189 @@ namespace MarkdownMode
         // Base definition for all other classification types
 
         [Export]
-        [Name("markdown")]
+        [Name(ClassificationTypeNames.Markdown)]
         internal static ClassificationTypeDefinition MarkdownClassificationDefinition = null;
 
         // Bold/italics
 
         [Export]
-        [Name("markdown.italics")]
-        [BaseDefinition("markdown")]
+        [Name(ClassificationTypeNames.Italics)]
+        [BaseDefinition(ClassificationTypeNames.Markdown)]
         internal static ClassificationTypeDefinition MarkdownItalicsDefinition = null;
 
         [Export]
-        [Name("markdown.bold")]
-        [BaseDefinition("markdown")]
+        [Name(ClassificationTypeNames.Bold)]
+        [BaseDefinition(ClassificationTypeNames.Markdown)]
         internal static ClassificationTypeDefinition MarkdownBoldDefinition = null;
 
         [Export]
-        [Name("markdown.bolditalics")]
-        [BaseDefinition("markdown.bold")]
-        [BaseDefinition("markdown.itlalics")]
+        [Name(ClassificationTypeNames.BoldItalics)]
+        [BaseDefinition(ClassificationTypeNames.Bold)]
+        [BaseDefinition(ClassificationTypeNames.Italics)]
         internal static ClassificationTypeDefinition MarkdownBoldItalicsDefinition = null;
 
         // Headers
 
         [Export]
-        [Name("markdown.header")]
-        [BaseDefinition("markdown")]
+        [Name(ClassificationTypeNames.Header)]
+        [BaseDefinition(ClassificationTypeNames.Markdown)]
         internal static ClassificationTypeDefinition MarkdownHeaderDefinition = null;
 
         [Export]
-        [Name("markdown.header.h1")]
-        [BaseDefinition("markdown.header")]
+        [Name(ClassificationTypeNames.HeaderH1)]
+        [BaseDefinition(ClassificationTypeNames.Header)]
         internal static ClassificationTypeDefinition MarkdownH1Definition = null;
 
         [Export]
-        [Name("markdown.header.h2")]
-        [BaseDefinition("markdown.header")]
+        [Name(ClassificationTypeNames.HeaderH2)]
+        [BaseDefinition(ClassificationTypeNames.Header)]
         internal static ClassificationTypeDefinition MarkdownH2Definition = null;
 
         [Export]
-        [Name("markdown.header.h3")]
-        [BaseDefinition("markdown.header")]
+        [Name(ClassificationTypeNames.HeaderH3)]
+        [BaseDefinition(ClassificationTypeNames.Header)]
         internal static ClassificationTypeDefinition MarkdownH3Definition = null;
 
         [Export]
-        [Name("markdown.header.h4")]
-        [BaseDefinition("markdown.header")]
+        [Name(ClassificationTypeNames.HeaderH4)]
+        [BaseDefinition(ClassificationTypeNames.Header)]
         internal static ClassificationTypeDefinition MarkdownH4Definition = null;
 
         [Export]
-        [Name("markdown.header.h5")]
-        [BaseDefinition("markdown.header")]
+        [Name(ClassificationTypeNames.HeaderH5)]
+        [BaseDefinition(ClassificationTypeNames.Header)]
         internal static ClassificationTypeDefinition MarkdownH5Definition = null;
 
         [Export]
-        [Name("markdown.header.h6")]
-        [BaseDefinition("markdown.header")]
+        [Name(ClassificationTypeNames.HeaderH6)]
+        [BaseDefinition(ClassificationTypeNames.Header)]
         internal static ClassificationTypeDefinition MarkdownH6Definition = null;
 
         // Lists
 
         [Export]
-        [Name("markdown.list")]
-        [BaseDefinition("markdown")]
+        [Name(ClassificationTypeNames.List)]
+        [BaseDefinition(ClassificationTypeNames.Markdown)]
         internal static ClassificationTypeDefinition MarkdownListDefinition = null;
 
         [Export]
-        [Name("markdown.list.unordered")]
-        [BaseDefinition("markdown.list")]
+        [Name(ClassificationTypeNames.ListUnordered)]
+        [BaseDefinition(ClassificationTypeNames.List)]
         internal static ClassificationTypeDefinition MarkdownUnorderedListDefinition = null;
 
         [Export]
-        [Name("markdown.list.ordered")]
-        [BaseDefinition("markdown.list")]
+        [Name(ClassificationTypeNames.ListOrdered)]
+        [BaseDefinition(ClassificationTypeNames.List)]
         internal static ClassificationTypeDefinition MarkdownOrderedListDefinition = null;
 
         // Code/pre
 
         [Export]
-        [Name("markdown.pre")]
-        [BaseDefinition("markdown")]
+        [Name(ClassificationTypeNames.Preformatted)]
+        [BaseDefinition(ClassificationTypeNames.Markdown)]
         internal static ClassificationTypeDefinition MarkdownPreDefinition = null;
 
         [Export]
-        [Name("markdown.block")]
-        [BaseDefinition("markdown.pre")]
+        [Name(ClassificationTypeNames.Block)]
+        [BaseDefinition(ClassificationTypeNames.Preformatted)]
         internal static ClassificationTypeDefinition MarkdownCodeDefinition = null;
 
         // Quotes
 
         [Export]
-        [Name("markdown.blockquote")]
-        [BaseDefinition("markdown")]
+        [Name(ClassificationTypeNames.BlockQuote)]
+        [BaseDefinition(ClassificationTypeNames.Markdown)]
         internal static ClassificationTypeDefinition MarkdownBlockquoteDefinition = null;
 
         // Links
 
         [Export]
-        [Name("markdown.label")]
-        [BaseDefinition("markdown")]
+        [Name(ClassificationTypeNames.Label)]
+        [BaseDefinition(ClassificationTypeNames.Markdown)]
         internal static ClassificationTypeDefinition MarkdownLabel = null;
 
         [Export]
-        [Name("markdown.link")]
-        [BaseDefinition("markdown")]
+        [Name(ClassificationTypeNames.Link)]
+        [BaseDefinition(ClassificationTypeNames.Markdown)]
         internal static ClassificationTypeDefinition MarkdownLinkDefinition = null;
 
         [Export]
-        [Name("markdown.link.text")]
-        [BaseDefinition("markdown.link")]
+        [Name(ClassificationTypeNames.LinkText)]
+        [BaseDefinition(ClassificationTypeNames.Link)]
         internal static ClassificationTypeDefinition MarkdownLinkTextDefinition = null;
 
         [Export]
-        [Name("markdown.link.title")]
-        [BaseDefinition("markdown.link")]
+        [Name(ClassificationTypeNames.LinkTitle)]
+        [BaseDefinition(ClassificationTypeNames.Link)]
         internal static ClassificationTypeDefinition MarkdownLinkTitleDefinition = null;
 
         [Export]
-        [Name("markdown.link.label")]
-        [BaseDefinition("markdown.label")]
-        [BaseDefinition("markdown.link")]
+        [Name(ClassificationTypeNames.LinkLabel)]
+        [BaseDefinition(ClassificationTypeNames.Label)]
+        [BaseDefinition(ClassificationTypeNames.Link)]
         internal static ClassificationTypeDefinition MarkdownLinkLabelDefinition = null;
 
         [Export]
-        [Name("markdown.link.punctuation")]
-        [BaseDefinition("markdown.link")]
+        [Name(ClassificationTypeNames.LinkPunctuation)]
+        [BaseDefinition(ClassificationTypeNames.Link)]
         internal static ClassificationTypeDefinition MarkdownLinkPunctuationDefinition = null;
 
         // Link URLs
         
         [Export]
-        [Name("markdown.url")]
-        [BaseDefinition("markdown")]
+        [Name(ClassificationTypeNames.Url)]
+        [BaseDefinition(ClassificationTypeNames.Markdown)]
         internal static ClassificationTypeDefinition MarkdownLinkUrlDefinition = null;
 
         [Export]
-        [Name("markdown.url.inline")]
-        [BaseDefinition("markdown.url")]
+        [Name(ClassificationTypeNames.UrlInline)]
+        [BaseDefinition(ClassificationTypeNames.Url)]
         internal static ClassificationTypeDefinition MarkdownInlineLinkDefinition = null;
         
         [Export]
-        [Name("markdown.url.definition")]
-        [BaseDefinition("markdown.url")]
+        [Name(ClassificationTypeNames.UrlDefinition)]
+        [BaseDefinition(ClassificationTypeNames.Url)]
         internal static ClassificationTypeDefinition MarkdownDefinitionLinkDefinition = null;
 
         [Export]
-        [Name("markdown.url.automatic")]
-        [BaseDefinition("markdown.url")]
+        [Name(ClassificationTypeNames.UrlAutomatic)]
+        [BaseDefinition(ClassificationTypeNames.Url)]
         internal static ClassificationTypeDefinition MarkdownAutomaticLinkDefinition = null;
 
         // Images
 
         [Export]
-        [Name("markdown.image")]
-        [BaseDefinition("markdown")]
+        [Name(ClassificationTypeNames.Image)]
+        [BaseDefinition(ClassificationTypeNames.Markdown)]
         internal static ClassificationTypeDefinition MarkdownImageDefinition = null;
 
         [Export]
-        [Name("markdown.image.alt")]
-        [BaseDefinition("markdown.image")]
+        [Name(ClassificationTypeNames.ImageAlt)]
+        [BaseDefinition(ClassificationTypeNames.Image)]
         internal static ClassificationTypeDefinition MarkdownImageAltDefinition = null;
 
         [Export]
-        [Name("markdown.image.label")]
-        [BaseDefinition("markdown.label")]
-        [BaseDefinition("markdown.image")]
+        [Name(ClassificationTypeNames.ImageLabel)]
+        [BaseDefinition(ClassificationTypeNames.Label)]
+        [BaseDefinition(ClassificationTypeNames.Image)]
         internal static ClassificationTypeDefinition MarkdownImageLabelDefinition = null;
 
         [Export]
-        [Name("markdown.image.title")]
-        [BaseDefinition("markdown.image")]
+        [Name(ClassificationTypeNames.ImageTitle)]
+        [BaseDefinition(ClassificationTypeNames.Image)]
         internal static ClassificationTypeDefinition MarkdownImageTitleDefinition = null;
 
         [Export]
-        [Name("markdown.url.image")]
-        [BaseDefinition("markdown.image")]
-        [BaseDefinition("markdown.url")]
+        [Name(ClassificationTypeNames.UrlImage)]
+        [BaseDefinition(ClassificationTypeNames.Image)]
+        [BaseDefinition(ClassificationTypeNames.Url)]
         internal static ClassificationTypeDefinition MarkdownImageUrlDefinition = null;
 
         // Miscellaneous
 
         [Export]
-        [Name("markdown.horizontalrule")]
-        [BaseDefinition("markdown")]
+        [Name(ClassificationTypeNames.HorizontalRule)]
+        [BaseDefinition(ClassificationTypeNames.Markdown)]
         internal static ClassificationTypeDefinition MarkdownHorizontalRuleDefinition = null;
 
     }
