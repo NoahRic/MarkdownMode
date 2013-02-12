@@ -26,10 +26,13 @@ namespace MarkdownMode
         [Import]
         SVsServiceProvider GlobalServiceProvider = null;
 
+        [Import]
+        ITextDocumentFactoryService TextDocumentFactoryService = null;
+
         public void  TextViewCreated(IWpfTextView textView)
         {
             ITextDocument document;
-            if (!textView.TextDataModel.DocumentBuffer.Properties.TryGetProperty(typeof(ITextDocument), out document))
+            if (!TextDocumentFactoryService.TryGetTextDocument(textView.TextDataModel.DocumentBuffer, out document))
             {
                 document = null;
             }
