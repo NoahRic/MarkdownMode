@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Windows.Media;
+using System.Linq;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Utilities;
-using System.Text.RegularExpressions;
-using System.Diagnostics;
 
 namespace MarkdownMode
 {
@@ -27,8 +25,44 @@ namespace MarkdownMode
     {
         public const string ContentType = "markdown";
 
-        IClassificationTypeRegistryService _classificationRegistry;
-        ITextBuffer _buffer;
+        private static readonly string[] _tokenToClassificationTypeName;
+
+        private readonly IClassificationType[] _tokenToClassificationType = new IClassificationType[_tokenToClassificationTypeName.Length];
+        private readonly IClassificationTypeRegistryService _classificationRegistry;
+        private readonly ITextBuffer _buffer;
+
+        static MarkdownClassifier()
+        {
+            MarkdownParser.TokenType[] values = (MarkdownParser.TokenType[])Enum.GetValues(typeof(MarkdownParser.TokenType));
+            MarkdownParser.TokenType max = values.Max();
+            _tokenToClassificationTypeName = new string[(int)max + 1];
+
+            _tokenToClassificationTypeName[(int)MarkdownParser.TokenType.AutomaticUrl] = ClassificationTypeNames.UrlAutomatic;
+            _tokenToClassificationTypeName[(int)MarkdownParser.TokenType.Blockquote] = ClassificationTypeNames.BlockQuote;
+            _tokenToClassificationTypeName[(int)MarkdownParser.TokenType.Bold] = ClassificationTypeNames.Bold;
+            _tokenToClassificationTypeName[(int)MarkdownParser.TokenType.CodeBlock] = ClassificationTypeNames.Block;
+            _tokenToClassificationTypeName[(int)MarkdownParser.TokenType.H1] = ClassificationTypeNames.HeaderH1;
+            _tokenToClassificationTypeName[(int)MarkdownParser.TokenType.H2] = ClassificationTypeNames.HeaderH2;
+            _tokenToClassificationTypeName[(int)MarkdownParser.TokenType.H3] = ClassificationTypeNames.HeaderH3;
+            _tokenToClassificationTypeName[(int)MarkdownParser.TokenType.H4] = ClassificationTypeNames.HeaderH4;
+            _tokenToClassificationTypeName[(int)MarkdownParser.TokenType.H5] = ClassificationTypeNames.HeaderH5;
+            _tokenToClassificationTypeName[(int)MarkdownParser.TokenType.H6] = ClassificationTypeNames.HeaderH6;
+            _tokenToClassificationTypeName[(int)MarkdownParser.TokenType.HorizontalRule] = ClassificationTypeNames.HorizontalRule;
+            _tokenToClassificationTypeName[(int)MarkdownParser.TokenType.ImageAltText] = ClassificationTypeNames.ImageAlt;
+            _tokenToClassificationTypeName[(int)MarkdownParser.TokenType.ImageExpression] = ClassificationTypeNames.Image;
+            _tokenToClassificationTypeName[(int)MarkdownParser.TokenType.ImageLabel] = ClassificationTypeNames.ImageLabel;
+            _tokenToClassificationTypeName[(int)MarkdownParser.TokenType.ImageTitle] = ClassificationTypeNames.ImageTitle;
+            _tokenToClassificationTypeName[(int)MarkdownParser.TokenType.InlineUrl] = ClassificationTypeNames.UrlInline;
+            _tokenToClassificationTypeName[(int)MarkdownParser.TokenType.Italics] = ClassificationTypeNames.Italics;
+            _tokenToClassificationTypeName[(int)MarkdownParser.TokenType.LinkExpression] = ClassificationTypeNames.Link;
+            _tokenToClassificationTypeName[(int)MarkdownParser.TokenType.LinkLabel] = ClassificationTypeNames.LinkLabel;
+            _tokenToClassificationTypeName[(int)MarkdownParser.TokenType.LinkText] = ClassificationTypeNames.LinkText;
+            _tokenToClassificationTypeName[(int)MarkdownParser.TokenType.LinkTitle] = ClassificationTypeNames.LinkTitle;
+            _tokenToClassificationTypeName[(int)MarkdownParser.TokenType.OrderedListElement] = ClassificationTypeNames.ListOrdered;
+            _tokenToClassificationTypeName[(int)MarkdownParser.TokenType.PreBlock] = ClassificationTypeNames.Preformatted;
+            _tokenToClassificationTypeName[(int)MarkdownParser.TokenType.UnorderedListElement] = ClassificationTypeNames.ListUnordered;
+            _tokenToClassificationTypeName[(int)MarkdownParser.TokenType.UrlDefinition] = ClassificationTypeNames.UrlDefinition;
+        }
 
         public MarkdownClassifier(ITextBuffer buffer, IClassificationTypeRegistryService classificationRegistry)
         {
@@ -137,42 +171,22 @@ namespace MarkdownMode
             return spans;
         }
 
-        static Dictionary<MarkdownParser.TokenType, string> _tokenToClassificationType = new Dictionary<MarkdownParser.TokenType, string>()
+        private IClassificationType GetClassificationTypeForMarkdownToken(MarkdownParser.TokenType tokenType)
         {
-            { MarkdownParser.TokenType.AutomaticUrl, ClassificationTypeNames.UrlAutomatic },
-            { MarkdownParser.TokenType.Blockquote, ClassificationTypeNames.BlockQuote },
-            { MarkdownParser.TokenType.Bold, ClassificationTypeNames.Bold },
-            { MarkdownParser.TokenType.CodeBlock, ClassificationTypeNames.Block },
-            { MarkdownParser.TokenType.H1, ClassificationTypeNames.HeaderH1 },
-            { MarkdownParser.TokenType.H2, ClassificationTypeNames.HeaderH2 },
-            { MarkdownParser.TokenType.H3, ClassificationTypeNames.HeaderH3 },
-            { MarkdownParser.TokenType.H4, ClassificationTypeNames.HeaderH4 },
-            { MarkdownParser.TokenType.H5, ClassificationTypeNames.HeaderH5 },
-            { MarkdownParser.TokenType.H6, ClassificationTypeNames.HeaderH6 },
-            { MarkdownParser.TokenType.HorizontalRule, ClassificationTypeNames.HorizontalRule },
-            { MarkdownParser.TokenType.ImageAltText, ClassificationTypeNames.ImageAlt },
-            { MarkdownParser.TokenType.ImageExpression, ClassificationTypeNames.Image },
-            { MarkdownParser.TokenType.ImageLabel, ClassificationTypeNames.ImageLabel },
-            { MarkdownParser.TokenType.ImageTitle, ClassificationTypeNames.ImageTitle },
-            { MarkdownParser.TokenType.InlineUrl, ClassificationTypeNames.UrlInline },
-            { MarkdownParser.TokenType.Italics, ClassificationTypeNames.Italics },
-            { MarkdownParser.TokenType.LinkExpression, ClassificationTypeNames.Link },
-            { MarkdownParser.TokenType.LinkLabel, ClassificationTypeNames.LinkLabel },
-            { MarkdownParser.TokenType.LinkText, ClassificationTypeNames.LinkText },
-            { MarkdownParser.TokenType.LinkTitle, ClassificationTypeNames.LinkTitle },
-            { MarkdownParser.TokenType.OrderedListElement, ClassificationTypeNames.ListOrdered },
-            { MarkdownParser.TokenType.PreBlock, ClassificationTypeNames.Preformatted },
-            { MarkdownParser.TokenType.UnorderedListElement, ClassificationTypeNames.ListUnordered },
-            { MarkdownParser.TokenType.UrlDefinition, ClassificationTypeNames.UrlDefinition },
-        };
+            if ((int)tokenType < 0 || (int)tokenType >= _tokenToClassificationType.Length)
+                return null;
 
-        IClassificationType GetClassificationTypeForMarkdownToken(MarkdownParser.TokenType tokenType)
-        {
-            string classificationType;
-            if (!_tokenToClassificationType.TryGetValue(tokenType, out classificationType))
-                throw new ArgumentException("Unable to find classification type for " + tokenType.ToString(), "tokenType");
+            IClassificationType result = _tokenToClassificationType[(int)tokenType];
+            if (result == null)
+            {
+                if (string.IsNullOrEmpty(_tokenToClassificationTypeName[(int)tokenType]))
+                    throw new ArgumentException("Unable to find classification type for " + tokenType.ToString(), "tokenType");
 
-            return _classificationRegistry.GetClassificationType(classificationType);
+                result = _classificationRegistry.GetClassificationType(_tokenToClassificationTypeName[(int)tokenType]);
+                _tokenToClassificationType[(int)tokenType] = result;
+            }
+
+            return result;
         }
     }
 }
