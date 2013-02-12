@@ -96,21 +96,24 @@ namespace MarkdownMode
 
             BufferIdleEventUtil.AddBufferIdleEventListener(wpfTextView.TextBuffer, updateHandler);
 
-            textView.Closed += (sender, args) =>
-                {
-                    ClearPreviewWindow();
-                    BufferIdleEventUtil.RemoveBufferIdleEventListener(wpfTextView.TextBuffer, updateHandler);
-                };
+            textView.Closed += HandleTextViewClosed;
+            textView.GotAggregateFocus += HandleTextViewGotAggregateFocus;
+        }
 
-            textView.GotAggregateFocus += (sender, args) => 
-                {
-                    var window = GetPreviewWindow(false);
-                    if (window != null)
-                    {
-                        if (window.CurrentSource == null || window.CurrentSource != this)
-                            UpdatePreviewWindow(false);
-                    }
-                };
+        void HandleTextViewClosed(object sender, EventArgs e)
+        {
+            ClearPreviewWindow();
+            BufferIdleEventUtil.RemoveBufferIdleEventListener(textView.TextBuffer, updateHandler);
+        }
+
+        void HandleTextViewGotAggregateFocus(object sender, EventArgs e)
+        {
+            var window = GetPreviewWindow(false);
+            if (window != null)
+            {
+                if (window.CurrentSource == null || window.CurrentSource != this)
+                    UpdatePreviewWindow(false);
+            }
         }
 
         string GetDocumentName()

@@ -39,60 +39,76 @@ namespace MarkdownMode
             this.Height = 25;
 
             Button showPreview = new Button() { Content = "Show preview window" };
-            showPreview.Click += (sender, args) =>
-                {
-                    if (package != null)
-                    {
-                        var window = package.GetMarkdownPreviewToolWindow(true);
-                        ((IVsWindowFrame)window.Frame).ShowNoActivate();
-                    }
-                };
+            showPreview.Click += HandleShowPreviewClick;
 
             this.Children.Add(showPreview);
 
             Button copyHtml = new Button() { Content = "Copy HTML to clipboard" };
-            copyHtml.Click += (sender, args) =>
-                {
-                    Clipboard.SetText(GetHTMLText());
-                };
+            copyHtml.Click += HandleCopyHtmlClick;
 
             this.Children.Add(copyHtml);
 
             sectionCombo = new ComboBox();
-            sectionCombo.SelectionChanged += (sender, args) =>
-                {
-                    if (ignoreComboChange)
-                        return;
-
-                    ITextSnapshot snapshot = textView.TextSnapshot;
-
-                    int selectedIndex = sectionCombo.SelectedIndex;
-
-                    if (selectedIndex == 0)
-                    {
-                        NavigateTo(new SnapshotPoint(snapshot, 0));
-                    }
-                    else
-                    {
-                        selectedIndex--;
-
-                        if (selectedIndex >= sections.Count)
-                        {
-                            Debug.Fail("An item in the combo was selected that isn't a valid section.");
-                            return;
-                        }
-
-                        NavigateTo(sections[selectedIndex].Span.GetStartPoint(snapshot));
-                    }
-                };
+            sectionCombo.SelectionChanged += HandleSectionComboSelectionChanged;
             RefreshComboItems(null, EventArgs.Empty);
 
             this.Children.Add(sectionCombo);
 
             BufferIdleEventUtil.AddBufferIdleEventListener(textView.TextBuffer, RefreshComboItems);
-            textView.Closed += (sender, args) => BufferIdleEventUtil.RemoveBufferIdleEventListener(textView.TextBuffer, RefreshComboItems);
+            textView.Closed += HandleTextViewClosed;
 
-            textView.Caret.PositionChanged += (sender, args) => SetSectionComboToCaretPosition();
+            textView.Caret.PositionChanged += HandleTextViewCaretPositionChanged;
+        }
+
+        void HandleShowPreviewClick(object sender, EventArgs e)
+        {
+            if (package != null)
+            {
+                var window = package.GetMarkdownPreviewToolWindow(true);
+                ((IVsWindowFrame)window.Frame).ShowNoActivate();
+            }
+        }
+
+        void HandleCopyHtmlClick(object sender, EventArgs e)
+        {
+            Clipboard.SetText(GetHTMLText());
+        }
+
+        void HandleSectionComboSelectionChanged(object sender, EventArgs e)
+        {
+            if (ignoreComboChange)
+                return;
+
+            ITextSnapshot snapshot = textView.TextSnapshot;
+
+            int selectedIndex = sectionCombo.SelectedIndex;
+
+            if (selectedIndex == 0)
+            {
+                NavigateTo(new SnapshotPoint(snapshot, 0));
+            }
+            else
+            {
+                selectedIndex--;
+
+                if (selectedIndex >= sections.Count)
+                {
+                    Debug.Fail("An item in the combo was selected that isn't a valid section.");
+                    return;
+                }
+
+                NavigateTo(sections[selectedIndex].Span.GetStartPoint(snapshot));
+            }
+        }
+
+        void HandleTextViewClosed(object sender, EventArgs e)
+        {
+            BufferIdleEventUtil.RemoveBufferIdleEventListener(textView.TextBuffer, RefreshComboItems);
+        }
+
+        void HandleTextViewCaretPositionChanged(object sender, EventArgs e)
+        {
+            SetSectionComboToCaretPosition();
         }
 
         void NavigateTo(SnapshotPoint point)
