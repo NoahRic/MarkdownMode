@@ -134,7 +134,7 @@ namespace MarkdownMode
 
                         textView.VisualElement.Dispatcher.Invoke(new Action(() =>
                             {
-                                var previewWindow = GetPreviewWindow(create: true);
+                                var previewWindow = GetPreviewWindow(create: false);
 
                                 if (previewWindow.CurrentSource == this || previewWindow.CurrentSource == null)
                                     previewWindow.SetPreviewContent(this, content, GetDocumentName());
@@ -143,7 +143,7 @@ namespace MarkdownMode
             }
             else
             {
-                var previewWindow = GetPreviewWindow(create: true);
+                var previewWindow = GetPreviewWindow(create: false);
                 if (previewWindow != null)
                     previewWindow.SetPreviewContent(this, GetHTMLText(extraSpace: true), GetDocumentName());
             }
