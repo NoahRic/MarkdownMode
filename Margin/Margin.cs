@@ -50,11 +50,11 @@ namespace MarkdownMode
 
             sectionCombo = new ComboBox();
             sectionCombo.SelectionChanged += HandleSectionComboSelectionChanged;
-            RefreshComboItems(null, EventArgs.Empty);
+            HandleBackgroundIdleEvent(null, EventArgs.Empty);
 
             this.Children.Add(sectionCombo);
 
-            BufferIdleEventUtil.AddBufferIdleEventListener(textView.TextBuffer, RefreshComboItems);
+            BufferIdleEventUtil.AddBufferIdleEventListener(textView.TextBuffer, HandleBackgroundIdleEvent);
             textView.Closed += HandleTextViewClosed;
 
             textView.Caret.PositionChanged += HandleTextViewCaretPositionChanged;
@@ -103,12 +103,12 @@ namespace MarkdownMode
 
         void HandleTextViewClosed(object sender, EventArgs e)
         {
-            BufferIdleEventUtil.RemoveBufferIdleEventListener(textView.TextBuffer, RefreshComboItems);
+            BufferIdleEventUtil.RemoveBufferIdleEventListener(textView.TextBuffer, HandleBackgroundIdleEvent);
         }
 
         void HandleTextViewCaretPositionChanged(object sender, EventArgs e)
         {
-            SetSectionComboToCaretPosition();
+            RefreshComboItems(textView.TextBuffer.CurrentSnapshot, sections);
         }
 
         void NavigateTo(SnapshotPoint point)
@@ -121,18 +121,48 @@ namespace MarkdownMode
             textView.VisualElement.Focus();
         }
 
-        void SetSectionComboToCaretPosition()
+        void HandleBackgroundIdleEvent(object sender, EventArgs e)
+        {
+            ITextSnapshot snapshot = textView.TextBuffer.CurrentSnapshot;
+            var sections = new List<MarkdownSection>(
+                MarkdownParser.ParseMarkdownSections(snapshot)
+                              .Select(t => new MarkdownSection()
+                              {
+                                  TokenType = t.TokenType,
+                                  Span = snapshot.CreateTrackingSpan(t.Span, SpanTrackingMode.EdgeExclusive)
+                              }));
+
+            RefreshComboItems(snapshot, sections);
+        }
+
+        void RefreshComboItems(ITextSnapshot snapshot, List<MarkdownSection> sections)
         {
             try
             {
                 ignoreComboChange = true;
 
-                int currentItem = 0;
+                if (sections != this.sections)
+                {
+                    this.sections = sections;
+                    sectionCombo.Items.Clear();
 
+                    // First, add an item for "Top of the file"
+                    sectionCombo.Items.Add(" (Top of file)");
+
+                    foreach (var section in sections)
+                    {
+                        var lineText = section.Span.GetStartPoint(snapshot).GetContainingLine().GetText().TrimStart(' ', '\t', '#');
+                        string spaces = new string('-', section.TokenType - MarkdownParser.TokenType.H1);
+                        string comboText = string.Format("{0}{1}", spaces, lineText);
+
+                        sectionCombo.Items.Add(comboText);
+                    }
+                }
+
+                int currentItem = 0;
                 for (int i = sections.Count - 1; i >= 0; i--)
                 {
-                    var span = sections[i].Span.GetSpan(textView.TextSnapshot);
-
+                    var span = sections[i].Span.GetSpan(snapshot);
                     if (span.Contains(textView.Selection.Start.Position))
                     {
                         currentItem = i + 1;
@@ -141,44 +171,6 @@ namespace MarkdownMode
                 }
 
                 sectionCombo.SelectedIndex = currentItem;
-            }
-            finally
-            {
-                ignoreComboChange = false;
-            }
-        }
-
-        void RefreshComboItems(object sender, EventArgs args)
-        {
-            try
-            {
-                ignoreComboChange = true;
-
-                ITextSnapshot snapshot = textView.TextBuffer.CurrentSnapshot;
-
-                sections = new List<MarkdownSection>(
-                    MarkdownParser.ParseMarkdownSections(snapshot)
-                                  .Select(t => new MarkdownSection()
-                                  {
-                                      TokenType = t.TokenType,
-                                      Span = snapshot.CreateTrackingSpan(t.Span, SpanTrackingMode.EdgeExclusive)
-                                  }));
-
-                sectionCombo.Items.Clear();
-
-                // First, add an item for "Top of the file"
-                sectionCombo.Items.Add(" (Top of file)");
-
-                foreach (var section in sections)
-                {
-                    var lineText = section.Span.GetStartPoint(snapshot).GetContainingLine().GetText().TrimStart(' ', '\t', '#');
-                    string spaces = new string('-', section.TokenType - MarkdownParser.TokenType.H1);
-                    string comboText = string.Format("{0}{1}", spaces, lineText);
-
-                    sectionCombo.Items.Add(comboText);
-                }
-
-                SetSectionComboToCaretPosition();
             }
             finally
             {
