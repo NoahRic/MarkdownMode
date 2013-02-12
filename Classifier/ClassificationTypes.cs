@@ -101,7 +101,7 @@ namespace MarkdownMode
         [Export]
         [Name("markdown.blockquote")]
         [BaseDefinition("markdown")]
-        internal static ClassificationTypeDefinition MarkdowBlockquoteDefinition = null;
+        internal static ClassificationTypeDefinition MarkdownBlockquoteDefinition = null;
 
         // Links
 
