@@ -1,17 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Diagnostics;
 using System.Text;
-using Microsoft.VisualStudio.Text.Editor;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using Microsoft.VisualStudio.Text;
 using System.Windows.Threading;
-using System.Threading;
-using System.IO;
 using Microsoft.VisualStudio.Shell.Interop;
-using System.Diagnostics;
+using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Text.Editor;
 
 namespace MarkdownMode
 {
@@ -21,6 +19,7 @@ namespace MarkdownMode
         
         readonly IWpfTextView textView;
         readonly MarkdownPackage package;
+        readonly MarkdownBackgroundParser backgroundParser;
 
         List<MarkdownSection> sections;
 
@@ -29,7 +28,7 @@ namespace MarkdownMode
         ComboBox sectionCombo;
         bool ignoreComboChange = false;
 
-        public Margin(IWpfTextView wpfTextView, MarkdownPackage package)
+        public Margin(IWpfTextView wpfTextView, MarkdownPackage package, ITextDocumentFactoryService textDocumentFactoryService)
         {
             this.textView = wpfTextView;
             this.package = package;
@@ -50,13 +49,17 @@ namespace MarkdownMode
 
             sectionCombo = new ComboBox();
             sectionCombo.SelectionChanged += HandleSectionComboSelectionChanged;
-            HandleBackgroundIdleEvent(null, EventArgs.Empty);
 
             this.Children.Add(sectionCombo);
 
-            BufferIdleEventUtil.AddBufferIdleEventListener(textView.TextBuffer, HandleBackgroundIdleEvent);
-            textView.Closed += HandleTextViewClosed;
+            backgroundParser = textView.TextBuffer.Properties.GetOrCreateSingletonProperty(typeof(MarkdownBackgroundParser),
+                () => new MarkdownBackgroundParser(textView.TextBuffer, TaskScheduler.Default, textDocumentFactoryService));
 
+            sections = new List<MarkdownSection>();
+            backgroundParser.ParseComplete += HandleBackgroundParseComplete;
+            backgroundParser.RequestParse(true);
+
+            textView.Closed += HandleTextViewClosed;
             textView.Caret.PositionChanged += HandleTextViewCaretPositionChanged;
         }
 
@@ -66,6 +69,7 @@ namespace MarkdownMode
             {
                 var window = package.GetMarkdownPreviewToolWindow(true);
                 ((IVsWindowFrame)window.Frame).ShowNoActivate();
+                backgroundParser.RequestParse(true);
             }
         }
 
@@ -103,7 +107,7 @@ namespace MarkdownMode
 
         void HandleTextViewClosed(object sender, EventArgs e)
         {
-            BufferIdleEventUtil.RemoveBufferIdleEventListener(textView.TextBuffer, HandleBackgroundIdleEvent);
+            backgroundParser.Dispose();
         }
 
         void HandleTextViewCaretPositionChanged(object sender, EventArgs e)
@@ -121,18 +125,12 @@ namespace MarkdownMode
             textView.VisualElement.Focus();
         }
 
-        void HandleBackgroundIdleEvent(object sender, EventArgs e)
+        void HandleBackgroundParseComplete(object sender, ParseResultEventArgs e)
         {
-            ITextSnapshot snapshot = textView.TextBuffer.CurrentSnapshot;
-            var sections = new List<MarkdownSection>(
-                MarkdownParser.ParseMarkdownSections(snapshot)
-                              .Select(t => new MarkdownSection()
-                              {
-                                  TokenType = t.TokenType,
-                                  Span = snapshot.CreateTrackingSpan(t.Span, SpanTrackingMode.EdgeExclusive)
-                              }));
-
-            RefreshComboItems(snapshot, sections);
+            MarkdownParseResultEventArgs args = e as MarkdownParseResultEventArgs;
+            List<MarkdownSection> newSections = args != null ? args.Sections : new List<MarkdownSection>();
+            Action updateAction = () => RefreshComboItems(textView.TextBuffer.CurrentSnapshot, args.Sections);
+            Dispatcher.BeginInvoke(updateAction);
         }
 
         void RefreshComboItems(ITextSnapshot snapshot, List<MarkdownSection> sections)
@@ -162,7 +160,7 @@ namespace MarkdownMode
                 int currentItem = 0;
                 for (int i = sections.Count - 1; i >= 0; i--)
                 {
-                    var span = sections[i].Span.GetSpan(snapshot);
+                    var span = sections[i].Span.GetSpan(textView.TextSnapshot);
                     if (span.Contains(textView.Selection.Start.Position))
                     {
                         currentItem = i + 1;

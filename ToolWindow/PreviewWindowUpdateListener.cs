@@ -1,19 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Microsoft.VisualStudio.Text.Editor;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
-using Microsoft.VisualStudio.Text;
-using System.Windows.Threading;
-using System.Threading;
-using System.IO;
-using Microsoft.VisualStudio.Shell.Interop;
 using System.ComponentModel.Composition;
-using Microsoft.VisualStudio.Utilities;
+using System.IO;
+using System.Threading.Tasks;
+using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Text.Editor;
+using Microsoft.VisualStudio.Utilities;
 
 namespace MarkdownMode
 {
@@ -31,12 +25,6 @@ namespace MarkdownMode
 
         public void  TextViewCreated(IWpfTextView textView)
         {
-            ITextDocument document;
-            if (!TextDocumentFactoryService.TryGetTextDocument(textView.TextDataModel.DocumentBuffer, out document))
-            {
-                document = null;
-            }
-
             MarkdownPackage package = null;
 
             // If there is a shell service (which there should be, in VS), force the markdown package to load
@@ -44,7 +32,10 @@ namespace MarkdownMode
             if (shell != null)
                 package = MarkdownPackage.ForceLoadPackage(shell);
 
-            textView.Properties.GetOrCreateSingletonProperty(() => new PreviewWindowUpdateListener(textView, package, document));
+            if (package == null)
+                return;
+
+            textView.Properties.GetOrCreateSingletonProperty(() => new PreviewWindowUpdateListener(textView, package, TextDocumentFactoryService));
         }
     }
 
@@ -55,55 +46,57 @@ namespace MarkdownMode
         readonly IWpfTextView textView;
         readonly ITextDocument document;
         readonly MarkdownPackage package;
+        readonly PreviewWindowBackgroundParser backgroundParser;
 
-        readonly EventHandler updateHandler;
-
-        readonly MarkdownSharp.Markdown markdownTransform = new MarkdownSharp.Markdown();
+        string previousHtml;
 
         MarkdownPreviewToolWindow GetPreviewWindow(bool create)
         {
             return (package != null) ? package.GetMarkdownPreviewToolWindow(create) : null;
         }
 
-        string GetHTMLText(bool extraSpace = false)
-        {
-            StringBuilder html = new StringBuilder();
-            html.AppendLine("<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"></head><body>");
-            html.AppendLine(markdownTransform.Transform(textView.TextBuffer.CurrentSnapshot.GetText()));
-            if (extraSpace)
-            {
-                for (int i = 0; i < 20; i++)
-                    html.Append("<br />");
-            }
-            html.AppendLine("</body></html>");
-
-            return html.ToString();
-        }
-
-        public PreviewWindowUpdateListener(IWpfTextView wpfTextView, MarkdownPackage package, ITextDocument document)
+        public PreviewWindowUpdateListener(IWpfTextView wpfTextView, MarkdownPackage package, ITextDocumentFactoryService textDocumentFactoryService)
         {
             this.textView = wpfTextView;
             this.package = package;
-            this.document = document;
+            this.backgroundParser = new PreviewWindowBackgroundParser(wpfTextView.TextBuffer, TaskScheduler.Default, textDocumentFactoryService);
+            this.backgroundParser.ParseComplete += HandleBackgroundParseComplete;
+
+            if (!textDocumentFactoryService.TryGetTextDocument(wpfTextView.TextDataModel.DocumentBuffer, out document))
+                document = null;
 
             if (textView.HasAggregateFocus)
-                UpdatePreviewWindow(false);
+                UpdatePreviewWindow(string.Empty);
 
-            updateHandler = (sender, args) =>
-                {
-                    UpdatePreviewWindow(async: true);
-                };
-
-            BufferIdleEventUtil.AddBufferIdleEventListener(wpfTextView.TextBuffer, updateHandler);
+            backgroundParser.RequestParse(true);
 
             textView.Closed += HandleTextViewClosed;
             textView.GotAggregateFocus += HandleTextViewGotAggregateFocus;
         }
 
+        private void HandleBackgroundParseComplete(object sender, ParseResultEventArgs e)
+        {
+            PreviewParseResultEventArgs args = e as PreviewParseResultEventArgs;
+            Action updateAction = () =>
+            {
+                try
+                {
+                    UpdatePreviewWindow(args != null ? args.Html : string.Empty);
+                }
+                catch (Exception ex)
+                {
+                    if (ErrorHandler.IsCriticalException(ex))
+                        throw;
+                }
+            };
+
+            textView.VisualElement.Dispatcher.BeginInvoke(updateAction);
+        }
+
         void HandleTextViewClosed(object sender, EventArgs e)
         {
             ClearPreviewWindow();
-            BufferIdleEventUtil.RemoveBufferIdleEventListener(textView.TextBuffer, updateHandler);
+            backgroundParser.Dispose();
         }
 
         void HandleTextViewGotAggregateFocus(object sender, EventArgs e)
@@ -112,7 +105,7 @@ namespace MarkdownMode
             if (window != null)
             {
                 if (window.CurrentSource == null || window.CurrentSource != this)
-                    UpdatePreviewWindow(false);
+                    UpdatePreviewWindow(previousHtml);
             }
         }
 
@@ -124,29 +117,12 @@ namespace MarkdownMode
                 return Path.GetFileName(document.FilePath);
         }
 
-        void UpdatePreviewWindow(bool async)
+        private void UpdatePreviewWindow(string htmlText)
         {
-            if (async)
-            {
-                ThreadPool.QueueUserWorkItem(state =>
-                    {
-                        string content = GetHTMLText(extraSpace: true);
-
-                        textView.VisualElement.Dispatcher.Invoke(new Action(() =>
-                            {
-                                var previewWindow = GetPreviewWindow(create: false);
-
-                                if (previewWindow.CurrentSource == this || previewWindow.CurrentSource == null)
-                                    previewWindow.SetPreviewContent(this, content, GetDocumentName());
-                            }), DispatcherPriority.ApplicationIdle);
-                    });
-            }
-            else
-            {
-                var previewWindow = GetPreviewWindow(create: false);
-                if (previewWindow != null)
-                    previewWindow.SetPreviewContent(this, GetHTMLText(extraSpace: true), GetDocumentName());
-            }
+            previousHtml = htmlText;
+            var previewWindow = GetPreviewWindow(create: false);
+            if (previewWindow != null)
+                previewWindow.SetPreviewContent(this, htmlText, GetDocumentName());
         }
 
         void ClearPreviewWindow()
