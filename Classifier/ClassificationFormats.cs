@@ -59,6 +59,7 @@ namespace MarkdownMode
             public MarkdownH1Format()
             {
                 this.DisplayName = Resources.FormatHeaderH1;
+                this.ForegroundColor = Colors.MediumPurple;
                 this.FontRenderingSize = 22;
             }
         }
@@ -72,6 +73,7 @@ namespace MarkdownMode
             public MarkdownH2Format()
             {
                 this.DisplayName = Resources.FormatHeaderH2;
+                this.ForegroundColor = Colors.MediumPurple;
                 this.FontRenderingSize = 20;
             }
         }
@@ -85,6 +87,7 @@ namespace MarkdownMode
             public MarkdownH3Format()
             {
                 this.DisplayName = Resources.FormatHeaderH3;
+                this.ForegroundColor = Colors.MediumPurple;
                 this.FontRenderingSize = 18;
             }
         }
@@ -98,6 +101,7 @@ namespace MarkdownMode
             public MarkdownH4Format()
             {
                 this.DisplayName = Resources.FormatHeaderH4;
+                this.ForegroundColor = Colors.MediumPurple;
                 this.FontRenderingSize = 16;
             }
         }
@@ -111,6 +115,7 @@ namespace MarkdownMode
             public MarkdownH5Format()
             {
                 this.DisplayName = Resources.FormatHeaderH5;
+                this.ForegroundColor = Colors.MediumPurple;
                 this.FontRenderingSize = 14;
             }
         }
@@ -124,6 +129,7 @@ namespace MarkdownMode
             public MarkdownH6Format()
             {
                 this.DisplayName = Resources.FormatHeaderH6;
+                this.ForegroundColor = Colors.MediumPurple;
                 this.FontRenderingSize = 12;
             }
         }
