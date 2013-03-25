@@ -73,7 +73,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BufferIdleEventUtil.cs" />
+    <Compile Include="BackgroundParser.cs" />
     <Compile Include="Classifier\ClassificationFormats.cs" />
     <Compile Include="Classifier\ClassificationTypes.cs" />
     <Compile Include="Classifier\Classifier.cs" />
@@ -82,7 +82,10 @@
     <Compile Include="Margin\MarginProvider.cs" />
     <Compile Include="Markdown.cs" />
     <Compile Include="MarkdownParser.cs" />
+    <Compile Include="MarkdownParseResultEventArgs.cs" />
     <Compile Include="Outlining\OutliningTagger.cs" />
+    <Compile Include="MarkdownBackgroundParser.cs" />
+    <Compile Include="ParseResultEventArgs.cs" />
     <Compile Include="Resources.Designer.cs">
       <DependentUpon>Resources.resx</DependentUpon>
       <AutoGen>True</AutoGen>
@@ -90,9 +93,12 @@
     </Compile>
     <Compile Include="SpellcheckSupport\MarkdownNaturalTextTagger.cs" />
     <Compile Include="ToolWindow\Guids.cs" />
+    <Compile Include="ToolWindow\PreviewParseResultEventArgs.cs" />
+    <Compile Include="ToolWindow\PreviewWindowBackgroundParser.cs" />
     <Compile Include="ToolWindow\PreviewWindowUpdateListener.cs" />
     <Compile Include="ToolWindow\Package.cs" />
     <Compile Include="ToolWindow\PreviewToolWindow.cs" />
+    <Compile Include="WeakReference`1.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.markdown" />
