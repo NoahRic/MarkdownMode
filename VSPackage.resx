@@ -129,4 +129,8 @@
     <value>Markdown mode for Visual Studio</value>
     <comment>Package description</comment>
   </data>
+  <data name="410" xml:space="preserve">
+    <value>Rendering</value>
+    <comment>Markdown rendering options page display name</comment>
+  </data>
 </root>

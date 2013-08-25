@@ -111,6 +111,15 @@ namespace MarkdownMode {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Markdown Mode for Visual Studio.
+        /// </summary>
+        internal static string GitHubUserAgent {
+            get {
+                return ResourceManager.GetString("GitHubUserAgent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to /*
         ///
         ///github.com style (c) Vasily Polovnyov &lt;vast@whiteants.net&gt;

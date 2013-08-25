@@ -70,6 +70,9 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xaml" />
     <Reference Include="WindowsBase" />
@@ -88,6 +91,21 @@
     <Compile Include="MarkdownLanguageInfo.cs" />
     <Compile Include="MarkdownParser.cs" />
     <Compile Include="MarkdownParseResultEventArgs.cs" />
+    <Compile Include="OptionsPages\GitHubAuthorizationForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="OptionsPages\GitHubAuthorizationForm.Designer.cs">
+      <DependentUpon>GitHubAuthorizationForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="OptionsPages\RenderingOptions.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="OptionsPages\RenderingOptionsControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="OptionsPages\RenderingOptionsControl.Designer.cs">
+      <DependentUpon>RenderingOptionsControl.cs</DependentUpon>
+    </Compile>
     <Compile Include="Outlining\OutliningTagger.cs" />
     <Compile Include="MarkdownBackgroundParser.cs" />
     <Compile Include="ParseResultEventArgs.cs" />
@@ -137,6 +155,12 @@
     <Content Include="Resources\mathjax.html" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="OptionsPages\GitHubAuthorizationForm.resx">
+      <DependentUpon>GitHubAuthorizationForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="OptionsPages\RenderingOptionsControl.resx">
+      <DependentUpon>RenderingOptionsControl.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>

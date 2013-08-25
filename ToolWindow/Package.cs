@@ -9,6 +9,7 @@ using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio;
+using RenderingOptions = MarkdownMode.OptionsPages.RenderingOptions;
 
 namespace MarkdownMode
 {
@@ -26,10 +27,12 @@ namespace MarkdownMode
     [ProvideLanguageExtension(typeof(MarkdownLanguageInfo), ".mdown")]
     [ProvideLanguageExtension(typeof(MarkdownLanguageInfo), ".mkdn")]
     [ProvideLanguageExtension(typeof(MarkdownLanguageInfo), ".markdown")]
+    [ProvideLanguageEditorOptionPage(typeof(RenderingOptions), MarkdownLanguageInfo.LanguageName, "", "Rendering", "#410")]
 
     [Guid(GuidList.guidMarkdownPackagePkgString)]
     public sealed class MarkdownPackage : Package
     {
+        static MarkdownPackage _instance;
         MarkdownLanguageInfo _languageInfo;
 
         public static MarkdownPackage ForceLoadPackage(IVsShell shell)
@@ -48,6 +51,29 @@ namespace MarkdownMode
         public MarkdownPackage()
         {
             Trace.WriteLine("Loaded MarkdownPackage.");
+            _instance = this;
+        }
+
+        public static MarkdownPackage Instance
+        {
+            get
+            {
+                return _instance;
+            }
+        }
+
+        public RenderingOptions RenderingOptions
+        {
+            get
+            {
+                return GetDialogPage<RenderingOptions>();
+            }
+        }
+
+        T GetDialogPage<T>()
+            where T : DialogPage
+        {
+            return (T)base.GetDialogPage(typeof(T));
         }
 
         private void ShowToolWindow(object sender, EventArgs e)
