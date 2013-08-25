@@ -127,4 +127,16 @@
   <data name="ToolWindowTitle" xml:space="preserve">
     <value>Markdown Preview Window</value>
   </data>
+  <data name="GitHubCss" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>resources\github.css;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="HighlightCss" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>resources\highlight.css;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="HighlightJavaScript" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>resources\highlight.js;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="Mathjax" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>resources\mathjax.html;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
 </root>
