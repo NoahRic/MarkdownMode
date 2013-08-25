@@ -61,6 +61,8 @@
     <Reference Include="Microsoft.VisualStudio.Text.UI.Wpf">
       <Private>True</Private>
     </Reference>
+    <Reference Include="Microsoft.VisualStudio.TextManager.Interop, Version=7.1.40304.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <Reference Include="Microsoft.VisualStudio.TextManager.Interop.8.0, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="System" />
@@ -78,9 +80,12 @@
     <Compile Include="Classifier\ClassificationTypes.cs" />
     <Compile Include="Classifier\Classifier.cs" />
     <Compile Include="ContentType.cs" />
+    <Compile Include="IConnectionPointContainerExtensions.cs" />
+    <Compile Include="LanguagePreferences.cs" />
     <Compile Include="Margin\Margin.cs" />
     <Compile Include="Margin\MarginProvider.cs" />
     <Compile Include="Markdown.cs" />
+    <Compile Include="MarkdownLanguageInfo.cs" />
     <Compile Include="MarkdownParser.cs" />
     <Compile Include="MarkdownParseResultEventArgs.cs" />
     <Compile Include="Outlining\OutliningTagger.cs" />
@@ -132,6 +137,10 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="VSPackage.resx">
+      <SubType>Designer</SubType>
+      <LogicalName>VSPackage.resources</LogicalName>
       <MergeWithCTO>true</MergeWithCTO>
     </EmbeddedResource>
   </ItemGroup>
