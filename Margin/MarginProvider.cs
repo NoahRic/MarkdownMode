@@ -17,6 +17,9 @@ namespace MarkdownMode
         [Import]
         SVsServiceProvider GlobalServiceProvider = null;
 
+        [Import]
+        ITextDocumentFactoryService TextDocumentFactoryService = null;
+
         public IWpfTextViewMargin CreateMargin(IWpfTextViewHost wpfTextViewHost, IWpfTextViewMargin marginContainer)
         {
             MarkdownPackage package = null;
@@ -26,7 +29,7 @@ namespace MarkdownMode
             if (shell != null)
                 package = MarkdownPackage.ForceLoadPackage(shell);
 
-            return new Margin(wpfTextViewHost.TextView, package);
+            return new Margin(wpfTextViewHost.TextView, package, TextDocumentFactoryService);
         }
     }
 }

@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Threading;
+using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Utilities;
@@ -14,9 +16,12 @@ namespace MarkdownMode
     [ContentType(ContentType.Name)]
     sealed class OutliningTaggerProvider : ITaggerProvider
     {
+        [Import]
+        internal ITextDocumentFactoryService TextDocumentFactoryService = null;
+
         public ITagger<T> CreateTagger<T>(ITextBuffer buffer) where T : ITag
         {
-            return buffer.Properties.GetOrCreateSingletonProperty(() => new OutliningTagger(buffer)) as ITagger<T>;
+            return buffer.Properties.GetOrCreateSingletonProperty(() => new OutliningTagger(buffer, this)) as ITagger<T>;
         }
     }
 
@@ -28,31 +33,30 @@ namespace MarkdownMode
 
     sealed class OutliningTagger : ITagger<IOutliningRegionTag>, IDisposable
     {
-        ITextBuffer _buffer;
+        readonly Dispatcher _dispatcher;
+        readonly ITextBuffer _buffer;
+        readonly MarkdownBackgroundParser _backgroundParser;
 
         List<MarkdownSection> _sections;
 
-        public OutliningTagger(ITextBuffer buffer)
+        public OutliningTagger(ITextBuffer buffer, OutliningTaggerProvider provider)
         {
+            _dispatcher = Dispatcher.CurrentDispatcher;
             _buffer = buffer;
-            _sections = new List<MarkdownSection>();
+            _backgroundParser = buffer.Properties.GetOrCreateSingletonProperty(typeof(MarkdownBackgroundParser),
+                () => new MarkdownBackgroundParser(buffer, TaskScheduler.Default, provider.TextDocumentFactoryService));
 
-            ReparseFile(null, EventArgs.Empty);
-            BufferIdleEventUtil.AddBufferIdleEventListener(buffer, ReparseFile);
+            _sections = new List<MarkdownSection>();
+            _backgroundParser.ParseComplete += HandleBackgroundParseComplete;
+            _backgroundParser.RequestParse(true);
         }
 
-        void ReparseFile(object sender, EventArgs args)
+        private void HandleBackgroundParseComplete(object sender, ParseResultEventArgs e)
         {
-            ITextSnapshot snapshot = _buffer.CurrentSnapshot;
+            MarkdownParseResultEventArgs args = e as MarkdownParseResultEventArgs;
+            List<MarkdownSection> newSections = args != null ? args.Sections : new List<MarkdownSection>();
 
-            List<MarkdownSection> newSections = new List<MarkdownSection>(
-                MarkdownParser.ParseMarkdownSections(snapshot)
-                              .Select(t => new MarkdownSection()
-                              {
-                                  TokenType = t.TokenType,
-                                  Span = snapshot.CreateTrackingSpan(t.Span, SpanTrackingMode.EdgeExclusive)
-                              }));
-
+            ITextSnapshot snapshot = e.Snapshot;
             NormalizedSnapshotSpanCollection oldSectionSpans = new NormalizedSnapshotSpanCollection(
                 _sections.Select(s => s.Span.GetSpan(snapshot)));
             NormalizedSnapshotSpanCollection newSectionSpans = new NormalizedSnapshotSpanCollection(
@@ -60,14 +64,26 @@ namespace MarkdownMode
 
             NormalizedSnapshotSpanCollection difference = SymmetricDifference(oldSectionSpans, newSectionSpans);
 
-            _sections = newSections;
-
-            foreach (var span in difference)
+            Action updateAction = () =>
             {
-                var temp = TagsChanged;
-                if (temp != null)
-                    temp(this, new SnapshotSpanEventArgs(span));
-            }
+                try
+                {
+                    _sections = newSections;
+                    foreach (var span in difference)
+                    {
+                        var temp = TagsChanged;
+                        if (temp != null)
+                            temp(this, new SnapshotSpanEventArgs(span));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (ErrorHandler.IsCriticalException(ex))
+                        throw;
+                }
+            };
+
+            _dispatcher.BeginInvoke(updateAction);
         }
 
         NormalizedSnapshotSpanCollection SymmetricDifference(NormalizedSnapshotSpanCollection first, NormalizedSnapshotSpanCollection second)
@@ -108,7 +124,7 @@ namespace MarkdownMode
 
         public void Dispose()
         {
-            BufferIdleEventUtil.RemoveBufferIdleEventListener(_buffer, ReparseFile);
+            _backgroundParser.Dispose();
         }
     }
 }
