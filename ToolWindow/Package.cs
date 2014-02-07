@@ -9,6 +9,7 @@ using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio;
+using RenderingOptions = MarkdownMode.OptionsPages.RenderingOptions;
 
 namespace MarkdownMode
 {
@@ -16,9 +17,24 @@ namespace MarkdownMode
     [InstalledProductRegistration("#110", "#112", "1.0")]
     [ProvideMenuResource(1000, 1)]
     [ProvideToolWindow(typeof(MarkdownPreviewToolWindow))]
+
+    [ProvideLanguageService(typeof(MarkdownLanguageInfo), MarkdownLanguageInfo.LanguageName, MarkdownLanguageInfo.LanguageResourceId,
+        DefaultToInsertSpaces = true,
+        EnableLineNumbers = true,
+        RequestStockColors = true)]
+    [ProvideLanguageExtension(typeof(MarkdownLanguageInfo), ".mkd")]
+    [ProvideLanguageExtension(typeof(MarkdownLanguageInfo), ".md")]
+    [ProvideLanguageExtension(typeof(MarkdownLanguageInfo), ".mdown")]
+    [ProvideLanguageExtension(typeof(MarkdownLanguageInfo), ".mkdn")]
+    [ProvideLanguageExtension(typeof(MarkdownLanguageInfo), ".markdown")]
+    [ProvideLanguageEditorOptionPage(typeof(RenderingOptions), MarkdownLanguageInfo.LanguageName, "", "Rendering", "#410")]
+
     [Guid(GuidList.guidMarkdownPackagePkgString)]
     public sealed class MarkdownPackage : Package
     {
+        static MarkdownPackage _instance;
+        MarkdownLanguageInfo _languageInfo;
+
         public static MarkdownPackage ForceLoadPackage(IVsShell shell)
         {
             Guid packageGuid = new Guid(GuidList.guidMarkdownPackagePkgString);
@@ -35,6 +51,29 @@ namespace MarkdownMode
         public MarkdownPackage()
         {
             Trace.WriteLine("Loaded MarkdownPackage.");
+            _instance = this;
+        }
+
+        public static MarkdownPackage Instance
+        {
+            get
+            {
+                return _instance;
+            }
+        }
+
+        public RenderingOptions RenderingOptions
+        {
+            get
+            {
+                return GetDialogPage<RenderingOptions>();
+            }
+        }
+
+        T GetDialogPage<T>()
+            where T : DialogPage
+        {
+            return (T)base.GetDialogPage(typeof(T));
         }
 
         private void ShowToolWindow(object sender, EventArgs e)
@@ -70,6 +109,10 @@ namespace MarkdownMode
             Trace.WriteLine (string.Format(CultureInfo.CurrentCulture, "Entering Initialize() of: {0}", this.ToString()));
             base.Initialize();
 
+            // register the language service
+            _languageInfo = new MarkdownLanguageInfo(new VsServiceProviderWrapper(this));
+            ((IServiceContainer)this).AddService(typeof(MarkdownLanguageInfo), _languageInfo, true);
+
             // Add our command handlers for menu (commands must exist in the .vsct file)
             IMenuCommandService mcs = GetService(typeof(IMenuCommandService)) as IMenuCommandService;
             if (mcs != null)
@@ -80,6 +123,21 @@ namespace MarkdownMode
                 mcs.AddCommand( menuToolWin );
             }
         }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (_languageInfo != null)
+                {
+                    _languageInfo.Dispose();
+                    _languageInfo = null;
+                }
+            }
+
+            base.Dispose(disposing);
+        }
+
         #endregion
 
         public MarkdownPreviewToolWindow GetMarkdownPreviewToolWindow(bool create)
