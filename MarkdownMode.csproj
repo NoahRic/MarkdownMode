@@ -40,6 +40,7 @@
     <Reference Include="Microsoft.VisualStudio.CoreUtility">
       <Private>True</Private>
     </Reference>
+    <Reference Include="Microsoft.VisualStudio.Editor, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.VisualStudio.OLE.Interop, Version=7.1.40304.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <Reference Include="Microsoft.VisualStudio.Shell.10.0, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.VisualStudio.Shell.Immutable.10.0, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
@@ -85,6 +86,9 @@
     <Compile Include="Margin\Margin.cs" />
     <Compile Include="Margin\MarginProvider.cs" />
     <Compile Include="Markdown.cs" />
+    <Compile Include="MarkdownEditorFactory.cs" />
+    <Compile Include="MarkdownEditorFactoryWithEncoding.cs" />
+    <Compile Include="MarkdownEditorFactoryWithoutEncoding.cs" />
     <Compile Include="MarkdownLanguageInfo.cs" />
     <Compile Include="MarkdownParser.cs" />
     <Compile Include="MarkdownParseResultEventArgs.cs" />

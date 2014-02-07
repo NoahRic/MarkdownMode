@@ -21,6 +21,27 @@ namespace MarkdownMode
         DefaultToInsertSpaces = true,
         EnableLineNumbers = true,
         RequestStockColors = true)]
+
+    [ProvideEditorFactory(typeof(MarkdownEditorFactoryWithoutEncoding), 101)]
+    [ProvideEditorFactory(typeof(MarkdownEditorFactoryWithEncoding), 102)]
+
+    [ProvideEditorLogicalView(typeof(MarkdownEditorFactoryWithoutEncoding), VSConstants.LOGVIEWID.TextView_string)]
+    [ProvideEditorLogicalView(typeof(MarkdownEditorFactoryWithEncoding), VSConstants.LOGVIEWID.TextView_string)]
+
+    [ProvideEditorExtension(typeof(MarkdownEditorFactoryWithoutEncoding), ".mkd", 50)]
+    [ProvideEditorExtension(typeof(MarkdownEditorFactoryWithoutEncoding), ".md", 50)]
+    [ProvideEditorExtension(typeof(MarkdownEditorFactoryWithoutEncoding), ".mdown", 50)]
+    [ProvideEditorExtension(typeof(MarkdownEditorFactoryWithoutEncoding), ".mkdn", 50)]
+    [ProvideEditorExtension(typeof(MarkdownEditorFactoryWithoutEncoding), ".markdown", 50)]
+    [ProvideEditorExtension(typeof(MarkdownEditorFactoryWithEncoding), ".mkd", 49)]
+    [ProvideEditorExtension(typeof(MarkdownEditorFactoryWithEncoding), ".md", 49)]
+    [ProvideEditorExtension(typeof(MarkdownEditorFactoryWithEncoding), ".mdown", 49)]
+    [ProvideEditorExtension(typeof(MarkdownEditorFactoryWithEncoding), ".mkdn", 49)]
+    [ProvideEditorExtension(typeof(MarkdownEditorFactoryWithEncoding), ".markdown", 49)]
+
+    [ProvideEditorExtension(typeof(MarkdownEditorFactoryWithoutEncoding), ".*", 2)]
+    [ProvideEditorExtension(typeof(MarkdownEditorFactoryWithEncoding), ".*", 1)]
+
     [ProvideLanguageExtension(typeof(MarkdownLanguageInfo), ".mkd")]
     [ProvideLanguageExtension(typeof(MarkdownLanguageInfo), ".md")]
     [ProvideLanguageExtension(typeof(MarkdownLanguageInfo), ".mdown")]
@@ -82,6 +103,10 @@ namespace MarkdownMode
         {
             Trace.WriteLine (string.Format(CultureInfo.CurrentCulture, "Entering Initialize() of: {0}", this.ToString()));
             base.Initialize();
+
+            // register the editor factories
+            RegisterEditorFactory(new MarkdownEditorFactoryWithoutEncoding(this));
+            RegisterEditorFactory(new MarkdownEditorFactoryWithEncoding(this));
 
             // register the language service
             _languageInfo = new MarkdownLanguageInfo(new VsServiceProviderWrapper(this));

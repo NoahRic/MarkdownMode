@@ -121,6 +121,14 @@
     <value>Markdown</value>
     <comment>Markdown language name</comment>
   </data>
+  <data name="101" xml:space="preserve">
+    <value>Markdown Language</value>
+    <comment>Editor factory display name</comment>
+  </data>
+  <data name="102" xml:space="preserve">
+    <value>Markdown Language with Encoding</value>
+    <comment>Editor factory display name (with encoding)</comment>
+  </data>
   <data name="110" xml:space="preserve">
     <value>Markdown mode for Visual Studio</value>
     <comment>Package name</comment>
