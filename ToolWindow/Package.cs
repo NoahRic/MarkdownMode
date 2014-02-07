@@ -42,12 +42,6 @@ namespace MarkdownMode
     [ProvideEditorExtension(typeof(MarkdownEditorFactoryWithoutEncoding), ".*", 2)]
     [ProvideEditorExtension(typeof(MarkdownEditorFactoryWithEncoding), ".*", 1)]
 
-    [ProvideLanguageExtension(typeof(MarkdownLanguageInfo), ".mkd")]
-    [ProvideLanguageExtension(typeof(MarkdownLanguageInfo), ".md")]
-    [ProvideLanguageExtension(typeof(MarkdownLanguageInfo), ".mdown")]
-    [ProvideLanguageExtension(typeof(MarkdownLanguageInfo), ".mkdn")]
-    [ProvideLanguageExtension(typeof(MarkdownLanguageInfo), ".markdown")]
-
     [Guid(GuidList.guidMarkdownPackagePkgString)]
     public sealed class MarkdownPackage : Package
     {

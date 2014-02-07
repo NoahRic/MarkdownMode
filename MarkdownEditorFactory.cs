@@ -19,12 +19,15 @@ namespace MarkdownMode
     using System;
     using ErrorHandler = Microsoft.VisualStudio.ErrorHandler;
     using IComponentModel = Microsoft.VisualStudio.ComponentModelHost.IComponentModel;
+    using IConnectionPoint = Microsoft.VisualStudio.OLE.Interop.IConnectionPoint;
+    using IConnectionPointContainer = Microsoft.VisualStudio.OLE.Interop.IConnectionPointContainer;
     using IObjectWithSite = Microsoft.VisualStudio.OLE.Interop.IObjectWithSite;
     using IOleServiceProvider = Microsoft.VisualStudio.OLE.Interop.IServiceProvider;
     using IVsCodeWindow = Microsoft.VisualStudio.TextManager.Interop.IVsCodeWindow;
     using IVsEditorAdaptersFactoryService = Microsoft.VisualStudio.Editor.IVsEditorAdaptersFactoryService;
     using IVsEditorFactory = Microsoft.VisualStudio.Shell.Interop.IVsEditorFactory;
     using IVsHierarchy = Microsoft.VisualStudio.Shell.Interop.IVsHierarchy;
+    using IVsTextBufferDataEvents = Microsoft.VisualStudio.TextManager.Interop.IVsTextBufferDataEvents;
     using IVsTextBufferProvider = Microsoft.VisualStudio.Shell.Interop.IVsTextBufferProvider;
     using IVsTextLines = Microsoft.VisualStudio.TextManager.Interop.IVsTextLines;
     using IVsUserData = Microsoft.VisualStudio.TextManager.Interop.IVsUserData;
@@ -306,7 +309,51 @@ namespace MarkdownMode
             }
 
             cmdUI = VSConstants.GUID_TextEditorFactory;
+
+            var componentModel = (IComponentModel)new VsServiceProviderWrapper(Package).GetService(typeof(SComponentModel));
+            var bufferEventListener = new TextBufferEventListener(componentModel, textLines);
+            if (!createdDocData)
+            {
+                // we have a pre-created buffer, go ahead and initialize now as the buffer already
+                // exists and is initialized
+                bufferEventListener.OnLoadCompleted(0);
+            }
+
             return window;
+        }
+
+        private sealed class TextBufferEventListener : IVsTextBufferDataEvents
+        {
+            private readonly IComponentModel _componentModel;
+            private readonly IVsTextLines _textLines;
+
+            private readonly IConnectionPoint _connectionPoint;
+            private readonly uint _cookie;
+
+            public TextBufferEventListener(IComponentModel componentModel, IVsTextLines textLines)
+            {
+                this._componentModel = componentModel;
+                this._textLines = textLines;
+
+                var connectionPointContainer = textLines as IConnectionPointContainer;
+                var bufferEventsGuid = typeof(IVsTextBufferDataEvents).GUID;
+                connectionPointContainer.FindConnectionPoint(ref bufferEventsGuid, out _connectionPoint);
+                _connectionPoint.Advise(this, out _cookie);
+            }
+
+            public void OnFileChanged(uint grfChange, uint dwFileAttrs)
+            {
+            }
+
+            public int OnLoadCompleted(int fReload)
+            {
+                _connectionPoint.Unadvise(_cookie);
+
+                Guid languageServiceId = typeof(MarkdownLanguageInfo).GUID;
+                _textLines.SetLanguageServiceID(ref languageServiceId);
+
+                return VSConstants.S_OK;
+            }
         }
     }
 }
