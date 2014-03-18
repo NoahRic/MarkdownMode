@@ -192,7 +192,7 @@ namespace MarkdownSharp
 
         #endregion
 
-        private string documenPath;
+        private string documentPath;
 
         private enum HTMLTokenType { Text, Tag }
 
@@ -644,7 +644,8 @@ namespace MarkdownSharp
         /// <param name="path">document path</param>
         public void SetPathOfDocumentToTransform(string path)
         {
-            this.documenPath = path;
+            if(!String.IsNullOrEmpty(path))
+            this.documentPath = path.Substring(0,path.LastIndexOf('\\'));
         }
 
         /// <summary>
@@ -820,9 +821,13 @@ namespace MarkdownSharp
             string link = match.Groups[2].Value;
             if (link.StartsWith(".") || link.StartsWith("/"))
             {
-                if (!String.IsNullOrEmpty(documenPath))
+                if (!String.IsNullOrEmpty(documentPath))
                 {
-                    link = Path.Combine(documenPath.Substring(0, documenPath.LastIndexOf('\\')), link.Remove(0, 2).Replace('/', '\\'));
+                    if (Directory.Exists(documentPath))
+                    {
+                        Environment.CurrentDirectory = documentPath;
+                        link = Path.GetFullPath(link);
+                    }
                 }
             }
             _urls[linkID] = EncodeAmpsAndAngles(link);
