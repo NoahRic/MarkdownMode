@@ -92,6 +92,7 @@ software, even if advised of the possibility of such damage.
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -190,6 +191,8 @@ namespace MarkdownSharp
         private static bool _encodeProblemUrlCharacters = false;
 
         #endregion
+
+        private string documentPath;
 
         private enum HTMLTokenType { Text, Tag }
 
@@ -636,6 +639,16 @@ namespace MarkdownSharp
         }
 
         /// <summary>
+        /// Set the path of the document to be transformed
+        /// </summary>
+        /// <param name="path">document path</param>
+        public void SetPathOfDocumentToTransform(string path)
+        {
+            if(!String.IsNullOrEmpty(path))
+            this.documentPath = path.Substring(0,path.LastIndexOf('\\'));
+        }
+
+        /// <summary>
         /// Transforms the provided Markdown-formatted text to HTML;  
         /// see http://en.wikipedia.org/wiki/Markdown
         /// </summary>
@@ -803,7 +816,21 @@ namespace MarkdownSharp
         private string LinkEvaluator(Match match)
         {
             string linkID = match.Groups[1].Value.ToLowerInvariant();
-            _urls[linkID] = EncodeAmpsAndAngles(match.Groups[2].Value);
+
+            // qisun: deal with relative path to render image
+            string link = match.Groups[2].Value;
+            if (link.StartsWith(".") || link.StartsWith("/"))
+            {
+                if (!String.IsNullOrEmpty(documentPath))
+                {
+                    if (Directory.Exists(documentPath))
+                    {
+                        Environment.CurrentDirectory = documentPath;
+                        link = Path.GetFullPath(link);
+                    }
+                }
+            }
+            _urls[linkID] = EncodeAmpsAndAngles(link);
 
             if (match.Groups[3] != null && match.Groups[3].Length > 0)
                 _titles[linkID] = match.Groups[3].Value.Replace("\"", "&quot;");
