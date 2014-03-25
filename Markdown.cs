@@ -1145,6 +1145,18 @@ namespace MarkdownSharp
 
             url = EncodeProblemUrlChars(url);
 
+            if (url.StartsWith(".") || url.StartsWith("/"))
+            {
+                if (!String.IsNullOrEmpty(documentPath))
+                {
+                    if (Directory.Exists(documentPath))
+                    {
+                        Environment.CurrentDirectory = documentPath;
+                        url = Path.GetFullPath(url);
+                    }
+                }
+            }
+
             result = string.Format("<img src=\"{0}\" alt=\"{1}\"", url, alt);
 
             if (!String.IsNullOrEmpty(title))
