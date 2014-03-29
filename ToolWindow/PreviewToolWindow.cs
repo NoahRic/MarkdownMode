@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Collections;
-using System.ComponentModel;
-using System.Drawing;
-using System.Data;
+using System.IO;
 using System.Windows;
 using System.Runtime.InteropServices;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio;
 using System.Windows.Controls;
 
 namespace MarkdownMode
@@ -21,7 +19,7 @@ namespace MarkdownMode
         string title;
 
         const string EmptyWindowHtml = "Open a markdown file to see a preview.";
-        int? scrollBackTo = null;
+        int? scrollBackTo;
 
         /// <summary>
         /// Standard constructor for the tool window.
@@ -53,6 +51,27 @@ namespace MarkdownMode
                 scrollBackTo = null;
             };
             browser.IsVisibleChanged += HandleBrowserIsVisibleChanged;
+            browser.Navigating += (sender, args) =>
+                {
+                    if (args.Uri == null || args.Uri.HostNameType != UriHostNameType.Unknown || string.IsNullOrEmpty(args.Uri.LocalPath))
+                    {
+                        return; // doesn't look like a relative uri, preserve default behavior
+                    }
+
+                    var srvice = (IVsUIShellOpenDocument)this.GetService(typeof(IVsUIShellOpenDocument));
+                    if (srvice == null)
+                    {
+                        return; // error give up, preserver default behavior
+                    }
+
+                    string documentName = Path.GetFileName(args.Uri.LocalPath);
+                    string[] documentInfo = new string[2];
+                    if (srvice.SearchProjectsForRelativePath(0 /* RPS_UseAllSearchStrategies */, documentName, documentInfo) == VSConstants.S_OK)
+                    {
+                        VsShellUtilities.OpenDocument(this, documentInfo[0]);
+                        args.Cancel = true; // open matching solution document, prevent default behavior
+                    }
+                };
         }
 
         public override object Content
