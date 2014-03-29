@@ -20,7 +20,7 @@ namespace MarkdownMode
             if (textDocumentFactoryService.TryGetTextDocument(textBuffer, out markdownDocument))
             {
                 markdownDocumentPath = markdownDocument.FilePath;
-            } 
+            }
         }
 
         public override string Name
@@ -35,7 +35,6 @@ namespace MarkdownMode
         {
             StringBuilder html = new StringBuilder();
             html.AppendLine("<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"></head><body>");
-            html.AppendLine(markdownTransform.Transform(text));
             html.AppendLine(markdownTransform.Transform(text, markdownDocumentPath));
             if (extraSpace)
             {
