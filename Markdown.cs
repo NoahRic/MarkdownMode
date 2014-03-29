@@ -95,8 +95,6 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 
-using Microsoft.VisualStudio.Text;
-using System.Linq;
 
 namespace MarkdownSharp
 {
