@@ -4,3 +4,7 @@ obj*/
 *.suo
 *.user
 *~
+
+# VS project upgrade artefacts
+Backup/
+UpgradeLog.htm
