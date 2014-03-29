@@ -637,9 +637,16 @@ namespace MarkdownSharp
         }
 
         /// <summary>
-        /// Transforms the provided Markdown-formatted text to HTML;  
+        /// Transforms the provided Markdown-formatted text to HTML;
         /// see http://en.wikipedia.org/wiki/Markdown
         /// </summary>
+        /// <param name="text">
+        /// Markdown text to be transformed.
+        /// </param>
+        /// <param name="filePath">
+        /// The path to the Markdown file, used as a context to resolve relative paths,
+        /// null if there is no file.
+        /// </param>
         /// <remarks>
         /// The order in which other subs are called here is
         /// essential. Link and image substitutions need to happen before
