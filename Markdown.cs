@@ -192,7 +192,27 @@ namespace MarkdownSharp
 
         #endregion
 
-        private string documentPath;
+        /// <summary>
+        /// Document path
+        /// </summary>
+        private string documentToTransformPath;
+
+        public string DocumentToTransformPath
+        {
+            get { return documentToTransformPath; }
+            set
+            {
+                this.documentToTransformPath = value;
+                if (String.IsNullOrEmpty(value))
+                {
+                    this.documentToTransformPath = value;
+                }
+                else
+                {
+                    this.documentToTransformPath = Path.GetDirectoryName(value);
+                }
+            }
+        }
 
         private enum HTMLTokenType { Text, Tag }
 
@@ -639,16 +659,6 @@ namespace MarkdownSharp
         }
 
         /// <summary>
-        /// Set the path of the document to be transformed
-        /// </summary>
-        /// <param name="path">document path</param>
-        public void SetPathOfDocumentToTransform(string path)
-        {
-            if(!String.IsNullOrEmpty(path))
-            this.documentPath = path.Substring(0,path.LastIndexOf('\\'));
-        }
-
-        /// <summary>
         /// Transforms the provided Markdown-formatted text to HTML;  
         /// see http://en.wikipedia.org/wiki/Markdown
         /// </summary>
@@ -816,19 +826,12 @@ namespace MarkdownSharp
         private string LinkEvaluator(Match match)
         {
             string linkID = match.Groups[1].Value.ToLowerInvariant();
-
-            // qisun: deal with relative path to render image
             string link = match.Groups[2].Value;
-            if (link.StartsWith(".") || link.StartsWith("/"))
+            
+            // Transform the image url if it is a relative path
+            if (Uri.IsWellFormedUriString(link, UriKind.Relative))
             {
-                if (!String.IsNullOrEmpty(documentPath))
-                {
-                    if (Directory.Exists(documentPath))
-                    {
-                        Environment.CurrentDirectory = documentPath;
-                        link = Path.GetFullPath(link);
-                    }
-                }
+                link = RenderRelativeImagePath(link);
             }
             _urls[linkID] = EncodeAmpsAndAngles(link);
 
@@ -836,6 +839,21 @@ namespace MarkdownSharp
                 _titles[linkID] = match.Groups[3].Value.Replace("\"", "&quot;");
 
             return "";
+        }
+
+        /// <summary>
+        /// Render the relative image path.
+        /// </summary>
+        /// <param name="url">The relath path to transform.</param>
+        /// <returns></returns>
+        private string RenderRelativeImagePath(string url)
+        {
+            if (!String.IsNullOrEmpty(DocumentToTransformPath) && Directory.Exists(DocumentToTransformPath))
+            {
+                url = Path.GetFullPath(Path.Combine(DocumentToTransformPath, url));
+            }
+
+            return url;
         }
 
         /// <summary>
@@ -1145,16 +1163,9 @@ namespace MarkdownSharp
 
             url = EncodeProblemUrlChars(url);
 
-            if (url.StartsWith(".") || url.StartsWith("/"))
+            if (Uri.IsWellFormedUriString(url, UriKind.Relative))
             {
-                if (!String.IsNullOrEmpty(documentPath))
-                {
-                    if (Directory.Exists(documentPath))
-                    {
-                        Environment.CurrentDirectory = documentPath;
-                        url = Path.GetFullPath(url);
-                    }
-                }
+                url = RenderRelativeImagePath(url);
             }
 
             result = string.Format("<img src=\"{0}\" alt=\"{1}\"", url, alt);

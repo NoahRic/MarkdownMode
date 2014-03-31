@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.Text;
@@ -19,7 +20,7 @@ namespace MarkdownMode
             {
                 document = null;
             }
-            markdownTransform.SetPathOfDocumentToTransform(document == null ? null : document.FilePath);
+            markdownTransform.DocumentToTransformPath = document == null ? null : document.FilePath;
         }
 
         public override string Name
