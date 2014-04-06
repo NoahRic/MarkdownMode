@@ -117,12 +117,22 @@ namespace MarkdownMode
                 return Path.GetFileName(document.FilePath);
         }
 
-        private void UpdatePreviewWindow(string htmlText)
+        private string GetDocumentPath()
+        {
+            if (this.document == null)
+            {
+                return null;
+            }
+
+            return this.document.FilePath;
+        }
+
+        void UpdatePreviewWindow(string htmlText)
         {
             previousHtml = htmlText;
             var previewWindow = GetPreviewWindow(create: false);
             if (previewWindow != null)
-                previewWindow.SetPreviewContent(this, htmlText, GetDocumentName());
+                previewWindow.SetPreviewContent(this, htmlText, GetDocumentName(), GetDocumentPath());
         }
 
         void ClearPreviewWindow()
