@@ -17,6 +17,7 @@ namespace MarkdownMode
         object source;
         string html;
         string title;
+        string path;
 
         const string EmptyWindowHtml = "Open a markdown file to see a preview.";
         int? scrollBackTo;
@@ -53,24 +54,27 @@ namespace MarkdownMode
             browser.IsVisibleChanged += HandleBrowserIsVisibleChanged;
             browser.Navigating += (sender, args) =>
                 {
+                    if (this.path == null)
+                    {
+                        return; // current context unknown
+                    }
+
                     if (args.Uri == null || args.Uri.HostNameType != UriHostNameType.Unknown || string.IsNullOrEmpty(args.Uri.LocalPath))
                     {
-                        return; // doesn't look like a relative uri, preserve default behavior
+                        return; // doesn't look like a relative uri
                     }
 
-                    var srvice = (IVsUIShellOpenDocument)this.GetService(typeof(IVsUIShellOpenDocument));
-                    if (srvice == null)
+                    string documentName =
+                        new FileInfo(this.path).ResolveRelativePath(
+                            args.Uri.LocalPath.Replace('/', Path.DirectorySeparatorChar));
+
+                    if (documentName == null || !File.Exists(documentName))
                     {
-                        return; // error give up, preserver default behavior
+                        return; // relative path could not be resolved, or does not exist
                     }
 
-                    string documentName = Path.GetFileName(args.Uri.LocalPath);
-                    string[] documentInfo = new string[2];
-                    if (srvice.SearchProjectsForRelativePath(0 /* RPS_UseAllSearchStrategies */, documentName, documentInfo) == VSConstants.S_OK)
-                    {
-                        VsShellUtilities.OpenDocument(this, documentInfo[0]);
-                        args.Cancel = true; // open matching solution document, prevent default behavior
-                    }
+                    VsShellUtilities.OpenDocument(this, documentName);
+                    args.Cancel = true; // open matching document
                 };
         }
 
@@ -99,11 +103,12 @@ namespace MarkdownMode
             {
                 object source = this.source;
                 this.source = null;
+                this.path = null;
                 SetPreviewContent(source, html, title);
             }
         }
 
-        public void SetPreviewContent(object source, string html, string title)
+        public void SetPreviewContent(object source, string html, string title, string path = null)
         {
             if (string.IsNullOrEmpty(html) && string.IsNullOrEmpty(title))
             {
@@ -115,6 +120,7 @@ namespace MarkdownMode
             this.source = source;
             this.html = html;
             this.title = title;
+            this.path = path;
 
             if (!IsVisible)
                 return;
@@ -149,10 +155,12 @@ namespace MarkdownMode
         public void ClearPreviewContent()
         {
             this.Caption = "Markdown Preview";
-            scrollBackTo = null;
-            source = null;
-            html = string.Empty;
-            title = string.Empty;
+            this.scrollBackTo = null;
+            this.source = null;
+            this.html = string.Empty;
+            this.title = string.Empty;
+            this.path = null;
+
 
             browser.NavigateToString(EmptyWindowHtml);
         }
