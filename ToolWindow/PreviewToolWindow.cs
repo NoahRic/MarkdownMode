@@ -103,12 +103,11 @@ namespace MarkdownMode
             {
                 object source = this.source;
                 this.source = null;
-                this.path = null;
-                SetPreviewContent(source, html, title);
+                SetPreviewContent(source, this.html, this.title, this.path);
             }
         }
 
-        public void SetPreviewContent(object source, string html, string title, string path = null)
+        public void SetPreviewContent(object source, string html, string title, string path)
         {
             if (string.IsNullOrEmpty(html) && string.IsNullOrEmpty(title))
             {
