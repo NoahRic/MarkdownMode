@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.Text;
@@ -9,11 +10,17 @@ namespace MarkdownMode
     internal class PreviewWindowBackgroundParser : BackgroundParser
     {
         readonly MarkdownSharp.Markdown markdownTransform = new MarkdownSharp.Markdown();
+        readonly ITextDocument document;
 
         public PreviewWindowBackgroundParser(ITextBuffer textBuffer, TaskScheduler taskScheduler, ITextDocumentFactoryService textDocumentFactoryService)
             : base(textBuffer, taskScheduler, textDocumentFactoryService)
         {
             ReparseDelay = TimeSpan.FromMilliseconds(1000);
+            if (!textDocumentFactoryService.TryGetTextDocument(textBuffer, out document))
+            {
+                document = null;
+            }
+            markdownTransform.DocumentToTransformPath = document == null ? null : document.FilePath;
         }
 
         public override string Name

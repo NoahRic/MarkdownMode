@@ -92,6 +92,7 @@ software, even if advised of the possibility of such damage.
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -190,6 +191,17 @@ namespace MarkdownSharp
         private static bool _encodeProblemUrlCharacters = false;
 
         #endregion
+
+        /// <summary>
+        /// Document path
+        /// </summary>
+        private string documentToTransformPath;
+
+        public string DocumentToTransformPath
+        {
+            get { return documentToTransformPath; }
+            set { this.documentToTransformPath = !String.IsNullOrEmpty(value) ? Path.GetDirectoryName(value) : value; }
+        }
 
         private enum HTMLTokenType { Text, Tag }
 
@@ -803,12 +815,33 @@ namespace MarkdownSharp
         private string LinkEvaluator(Match match)
         {
             string linkID = match.Groups[1].Value.ToLowerInvariant();
-            _urls[linkID] = EncodeAmpsAndAngles(match.Groups[2].Value);
+            string link = match.Groups[2].Value;
+
+            link = GetCanonicalLinkPath(link);
+            _urls[linkID] = EncodeAmpsAndAngles(link);
 
             if (match.Groups[3] != null && match.Groups[3].Length > 0)
                 _titles[linkID] = match.Groups[3].Value.Replace("\"", "&quot;");
 
             return "";
+        }
+
+        /// <summary>
+        /// Render the relative image path.
+        /// </summary>
+        /// <param name="url">The relath path to transform.</param>
+        /// <returns></returns>
+        private string GetCanonicalLinkPath(string url)
+        {
+            if (Uri.IsWellFormedUriString(url, UriKind.Relative))
+            {
+                if (!String.IsNullOrEmpty(DocumentToTransformPath) && Directory.Exists(DocumentToTransformPath))
+                {
+                    url = Path.GetFullPath(Path.Combine(DocumentToTransformPath, url));
+                }
+            }
+
+            return url;
         }
 
         /// <summary>
@@ -1114,9 +1147,10 @@ namespace MarkdownSharp
 
             url = EscapeBoldItalic(url);
             if (url.StartsWith("<") && url.EndsWith(">"))
-                url = url.Substring(1, url.Length - 2);    // Remove <>'s surrounding URL, if present
+                url = url.Substring(1, url.Length - 2); // Remove <>'s surrounding URL, if present
 
             url = EncodeProblemUrlChars(url);
+            url = GetCanonicalLinkPath(url);
 
             result = string.Format("<img src=\"{0}\" alt=\"{1}\"", url, alt);
 
