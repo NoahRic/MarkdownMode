@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Collections;
-using System.ComponentModel;
-using System.Drawing;
-using System.Data;
+using System.IO;
 using System.Windows;
 using System.Runtime.InteropServices;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio;
 using System.Windows.Controls;
 
 namespace MarkdownMode
@@ -19,9 +17,10 @@ namespace MarkdownMode
         object source;
         string html;
         string title;
+        string path;
 
         const string EmptyWindowHtml = "Open a markdown file to see a preview.";
-        int? scrollBackTo = null;
+        int? scrollBackTo;
 
         /// <summary>
         /// Standard constructor for the tool window.
@@ -53,6 +52,30 @@ namespace MarkdownMode
                 scrollBackTo = null;
             };
             browser.IsVisibleChanged += HandleBrowserIsVisibleChanged;
+            browser.Navigating += (sender, args) =>
+                {
+                    if (this.path == null)
+                    {
+                        return; // current context unknown
+                    }
+
+                    if (args.Uri == null || args.Uri.HostNameType != UriHostNameType.Unknown || string.IsNullOrEmpty(args.Uri.LocalPath))
+                    {
+                        return; // doesn't look like a relative uri
+                    }
+
+                    string documentName =
+                        new FileInfo(this.path).ResolveRelativePath(
+                            args.Uri.LocalPath.Replace('/', Path.DirectorySeparatorChar));
+
+                    if (documentName == null || !File.Exists(documentName))
+                    {
+                        return; // relative path could not be resolved, or does not exist
+                    }
+
+                    VsShellUtilities.OpenDocument(this, documentName);
+                    args.Cancel = true; // open matching document
+                };
         }
 
         public override object Content
@@ -80,11 +103,11 @@ namespace MarkdownMode
             {
                 object source = this.source;
                 this.source = null;
-                SetPreviewContent(source, html, title);
+                SetPreviewContent(source, this.html, this.title, this.path);
             }
         }
 
-        public void SetPreviewContent(object source, string html, string title)
+        public void SetPreviewContent(object source, string html, string title, string path)
         {
             if (string.IsNullOrEmpty(html) && string.IsNullOrEmpty(title))
             {
@@ -96,6 +119,7 @@ namespace MarkdownMode
             this.source = source;
             this.html = html;
             this.title = title;
+            this.path = path;
 
             if (!IsVisible)
                 return;
@@ -130,10 +154,12 @@ namespace MarkdownMode
         public void ClearPreviewContent()
         {
             this.Caption = "Markdown Preview";
-            scrollBackTo = null;
-            source = null;
-            html = string.Empty;
-            title = string.Empty;
+            this.scrollBackTo = null;
+            this.source = null;
+            this.html = string.Empty;
+            this.title = string.Empty;
+            this.path = null;
+
 
             browser.NavigateToString(EmptyWindowHtml);
         }

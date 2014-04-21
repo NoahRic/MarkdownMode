@@ -92,16 +92,12 @@ software, even if advised of the possibility of such damage.
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 
-using Microsoft.VisualStudio.Text;
-using System.Linq;
-
 namespace MarkdownSharp
 {
-
-
     /// <summary>
     /// Markdown is a text-to-HTML conversion tool for web writers. 
     /// Markdown allows you to write using an easy-to-read, easy-to-write plain text format, 
@@ -627,6 +623,11 @@ namespace MarkdownSharp
         private int _listLevel;
 
         /// <summary>
+        /// full path to the current markdown file if it exists null otherwise
+        /// </summary>
+        private string _filePath;
+
+        /// <summary>
         /// current version of MarkdownSharp;  
         /// see http://block.google.com/p/markdownsharp/ for the latest block or to contribute
         /// </summary>
@@ -636,20 +637,27 @@ namespace MarkdownSharp
         }
 
         /// <summary>
-        /// Transforms the provided Markdown-formatted text to HTML;  
+        /// Transforms the provided Markdown-formatted text to HTML;
         /// see http://en.wikipedia.org/wiki/Markdown
         /// </summary>
+        /// <param name="text">
+        /// Markdown text to be transformed.
+        /// </param>
+        /// <param name="filePath">
+        /// The path to the Markdown file, used as a context to resolve relative paths,
+        /// null if there is no file.
+        /// </param>
         /// <remarks>
         /// The order in which other subs are called here is
         /// essential. Link and image substitutions need to happen before
         /// EscapeSpecialChars(), so that any *'s or _'s in the a
         /// and img tags get encoded.
         /// </remarks>
-        public string Transform(string text)
+        public string Transform(string text, string filePath = null)
         {
             if (text == null) return "";
 
-            Setup();
+            Setup(filePath);
 
             // Standardize line endings
             text = text.Replace("\r\n", "\n");    // DOS to Unix
@@ -724,7 +732,7 @@ namespace MarkdownSharp
             return text;
         }
 
-        private void Setup()
+        private void Setup(string path)
         {
             // Clear the global hashes. If we don't clear these, you get conflicts
             // from other articles when generating a page which contains more than
@@ -734,11 +742,12 @@ namespace MarkdownSharp
             _titles.Clear();
             _htmlBlocks.Clear();
             _listLevel = 0;
+            _filePath = path;
         }
 
         private void Cleanup()
         {
-            Setup();
+            Setup(null);
         }
 
         private static string _nestedBracketsPattern;
@@ -1081,6 +1090,7 @@ namespace MarkdownSharp
                 string url = _urls[linkID];
                 url = EscapeBoldItalic(url);
                 url = EncodeProblemUrlChars(url);
+                url = ExpandRealiveUriToLocalPath(url);
                 result = string.Format("<img src=\"{0}\" alt=\"{1}\"", url, altText);
 
                 if (_titles.ContainsKey(linkID))
@@ -1117,6 +1127,7 @@ namespace MarkdownSharp
                 url = url.Substring(1, url.Length - 2);    // Remove <>'s surrounding URL, if present
 
             url = EncodeProblemUrlChars(url);
+            url = ExpandRealiveUriToLocalPath(url);
 
             result = string.Format("<img src=\"{0}\" alt=\"{1}\"", url, alt);
 
@@ -1129,6 +1140,26 @@ namespace MarkdownSharp
             result += _emptyElementSuffix;
 
             return result;
+        }
+
+        private string ExpandRealiveUriToLocalPath(string url)
+        {
+            if (_filePath != null)
+            {
+                Uri uri;
+                if (Uri.TryCreate(url, UriKind.Relative, out uri))
+                {
+                    string directory = Path.GetDirectoryName(_filePath);
+                    if (!string.IsNullOrEmpty(directory))
+                    {
+                        url =
+                            new Uri(Path.Combine(directory, url.Replace('/', Path.DirectorySeparatorChar)))
+                                .AbsoluteUri;
+                    }
+                }
+            }
+
+            return url;
         }
 
         /// <summary>

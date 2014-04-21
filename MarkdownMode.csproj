@@ -81,6 +81,7 @@
     <Compile Include="Classifier\ClassificationTypes.cs" />
     <Compile Include="Classifier\Classifier.cs" />
     <Compile Include="ContentType.cs" />
+    <Compile Include="Extensions.cs" />
     <Compile Include="IConnectionPointContainerExtensions.cs" />
     <Compile Include="LanguagePreferences.cs" />
     <Compile Include="Margin\Margin.cs" />
