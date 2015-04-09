@@ -27,7 +27,9 @@
  * 
  * History: Milan ported the Markdown processor to C#. He granted license to me so I can open source it
  * and let the community contribute to and improve MarkdownSharp.
- * 
+ *
+ * 03/28/2015 - EFW - Added support for fenced code blocks.
+ * 04/02/2015 - EFW - Added code to fully qualify relative image filename paths in literal HTML img elements.
  */
 
 #region Copyright and license
@@ -209,7 +211,7 @@ namespace MarkdownSharp
         /// Static constructor
         /// </summary>
         /// <remarks>
-        /// In the static constuctor we'll initialize what stays the same across all transforms.
+        /// In the static constructor we'll initialize what stays the same across all transforms.
         /// </remarks>
         static Markdown()
         {
@@ -447,6 +449,8 @@ namespace MarkdownSharp
                     ((?=^[ ]{{0,{0}}}\S)|\Z) # Lookahead for non-space at line-start, or end of doc",
                     _tabWidth), RegexOptions.Multiline | RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
 
+        internal static Regex CodeBlockFencedRegex = new Regex("^```(.*?)\n(.+?)^```",
+            RegexOptions.Multiline | RegexOptions.Singleline | RegexOptions.Compiled);
         
         internal static Regex CodeSpanRegex = new Regex(@"
                     (?<!\\)   # Character before opening ` can't be a backslash
@@ -1309,11 +1313,14 @@ namespace MarkdownSharp
         }
 
         /// <summary>
-        /// /// Turn Markdown 4-space indented block into HTML pre block blocks
+        /// /// Turn Markdown 4-space indented blocks and fenced blocks into HTML pre block blocks
         /// </summary>
         private string DoCodeBlocks(string text)
         {
             text = CodeBlockRegex.Replace(text, new MatchEvaluator(CodeBlockEvaluator));
+
+            text = CodeBlockFencedRegex.Replace(text, new MatchEvaluator(CodeBlockFencedEvaluator));
+
             return text;
         }
 
@@ -1322,6 +1329,18 @@ namespace MarkdownSharp
             string codeBlock = match.Groups[1].Value;
 
             codeBlock = EncodeCode(Outdent(codeBlock));
+            codeBlock = Detab(codeBlock);
+            codeBlock = _newlinesLeadingTrailing.Replace(codeBlock, "");
+
+            return string.Concat("\n\n<pre><code>", codeBlock, "\n</code></pre>\n\n");
+        }
+
+        private string CodeBlockFencedEvaluator(Match match)
+        {
+            // The first group contains the optional language, the second contains the code
+            string codeBlock = match.Groups[2].Value;
+
+            codeBlock = EncodeCode(codeBlock);
             codeBlock = Detab(codeBlock);
             codeBlock = _newlinesLeadingTrailing.Replace(codeBlock, "");
 
@@ -1521,6 +1540,8 @@ namespace MarkdownSharp
                 text = Regex.Replace(text, pattern, new MatchEvaluator(EmailEvaluator), RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
             }
 
+            text = Regex.Replace(text, "src=\"(.*?)\"", new MatchEvaluator(FixUpImageFileUrls));
+
             return text;
         }
 
@@ -1583,6 +1604,18 @@ namespace MarkdownSharp
             return sb.ToString();
         }
 
+        /// <summary>
+        /// Fix up image file URLs by qualifying them with the current folder if necessary
+        /// </summary>
+        /// <param name="match">The match to fix up</param>
+        /// <returns>The replacement text</returns>
+        /// <remarks>These are typically from literal HTML img elements</remarks>
+        private string FixUpImageFileUrls(Match match)
+        {
+            string path = ExpandRealiveUriToLocalPath(match.Groups[1].Value);
+
+            return String.Format("src=\"{0}\"", path);
+        }
 
         private static Regex _amps = new Regex(@"&(?!(#[0-9]+)|(#[xX][a-fA-F0-9])|([a-zA-Z][a-zA-Z0-9]*);)", RegexOptions.ExplicitCapture | RegexOptions.Compiled);
         private static Regex _angles = new Regex(@"<(?![A-Za-z/?\$!])", RegexOptions.ExplicitCapture | RegexOptions.Compiled);
@@ -1650,7 +1683,7 @@ namespace MarkdownSharp
         }
 
         /// <summary>
-        /// this is to emulate what's evailable in PHP
+        /// this is to emulate what's available in PHP
         /// </summary>
         private static string RepeatString(string text, int count)
         {

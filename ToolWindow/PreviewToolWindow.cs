@@ -64,11 +64,15 @@ namespace MarkdownMode
                         return; // doesn't look like a relative uri
                     }
 
-                    string documentName =
-                        new FileInfo(this.path).ResolveRelativePath(
-                            args.Uri.LocalPath.Replace('/', Path.DirectorySeparatorChar));
+                    string documentName = new FileInfo(this.path).ResolveRelativePath(
+                        args.Uri.LocalPath.Replace('/', Path.DirectorySeparatorChar));
 
-                    if (documentName == null || !File.Exists(documentName))
+                    // If there is a file name but it doesn't exist and doesn't have an extension, try adding
+                    // ".md" (GitHub style target in a literal anchor link).
+                    if(documentName != null && !File.Exists(documentName) && Path.GetExtension(documentName).Length == 0)
+                        documentName += ".md";
+
+                    if(documentName == null || !File.Exists(documentName))
                     {
                         return; // relative path could not be resolved, or does not exist
                     }
@@ -117,7 +121,7 @@ namespace MarkdownMode
 
             bool sameSource = source == this.source;
             this.source = source;
-            this.html = html;
+            this.html = (html ?? String.Empty);
             this.title = title;
             this.path = path;
 
