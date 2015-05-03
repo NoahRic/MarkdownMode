@@ -152,7 +152,7 @@ namespace MarkdownMode
                 scrollBackTo = null;
             }
 
-            browser.NavigateToString(html);
+            browser.NavigateToString(this.html);
         }
 
         public void ClearPreviewContent()
