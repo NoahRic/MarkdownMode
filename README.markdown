@@ -1,6 +1,6 @@
-# Markdown Mode for Visual Studio 2010
+# Markdown Mode for Visual Studio
 
-This is a VS 2010 extension for editing Markdown files.  It has (or is planned to have) a number of features to help users write Markdown files, and I use it for writing [my blog][blog].
+This is a Visual Studio extension for editing Markdown files.  It has a number of features to help users write Markdown files, and was used for writing [my blog on MSDN][blog] when I worked at Microsoft.
 
 Here is a screenshot:
 <a href="http://blogs.msdn.com/photos/noahric/images/9946409/original.aspx">
