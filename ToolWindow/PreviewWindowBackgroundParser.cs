@@ -41,7 +41,7 @@ namespace MarkdownMode
 <html>
 <head>
 <meta http-equiv=""X-UA-Compatible"" content=""edge"" />
-<meta charset=""utf-8\"">
+<meta charset=""utf-8"">
 <style>
 body {
 	margin: 15px;
