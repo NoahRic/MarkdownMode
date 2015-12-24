@@ -78,6 +78,7 @@
   <ItemGroup>
     <Compile Include="BackgroundParser.cs" />
     <Compile Include="Classifier\ClassificationFormats.cs" />
+    <Compile Include="Classifier\ClassificationTypeNames.cs" />
     <Compile Include="Classifier\ClassificationTypes.cs" />
     <Compile Include="Classifier\Classifier.cs" />
     <Compile Include="ContentType.cs" />

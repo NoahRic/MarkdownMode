@@ -127,4 +127,73 @@
   <data name="ToolWindowTitle" xml:space="preserve">
     <value>Markdown Preview Window</value>
   </data>
+  <data name="FormatBlock" xml:space="preserve">
+    <value>Markdown Block</value>
+  </data>
+  <data name="FormatBlockQuote" xml:space="preserve">
+    <value>Markdown Block Quote</value>
+  </data>
+  <data name="FormatBold" xml:space="preserve">
+    <value>Markdown Bold</value>
+  </data>
+  <data name="FormatHeader" xml:space="preserve">
+    <value>Markdown Header</value>
+  </data>
+  <data name="FormatHeaderH1" xml:space="preserve">
+    <value>Markdown Header (Level 1)</value>
+  </data>
+  <data name="FormatHeaderH2" xml:space="preserve">
+    <value>Markdown Header (Level 2)</value>
+  </data>
+  <data name="FormatHeaderH3" xml:space="preserve">
+    <value>Markdown Header (Level 3)</value>
+  </data>
+  <data name="FormatHeaderH4" xml:space="preserve">
+    <value>Markdown Header (Level 4)</value>
+  </data>
+  <data name="FormatHeaderH5" xml:space="preserve">
+    <value>Markdown Header (Level 5)</value>
+  </data>
+  <data name="FormatHeaderH6" xml:space="preserve">
+    <value>Markdown Header (Level 6)</value>
+  </data>
+  <data name="FormatHorizontalRule" xml:space="preserve">
+    <value>Markdown Horizonal Rule</value>
+  </data>
+  <data name="FormatImage" xml:space="preserve">
+    <value>Markdown Image</value>
+  </data>
+  <data name="FormatImageAlt" xml:space="preserve">
+    <value>Markdown Image (Alt Text)</value>
+  </data>
+  <data name="FormatImageLabel" xml:space="preserve">
+    <value>Markdown Image (Label)</value>
+  </data>
+  <data name="FormatImageTitle" xml:space="preserve">
+    <value>Markdown Image (Title)</value>
+  </data>
+  <data name="FormatItalics" xml:space="preserve">
+    <value>Markdown Italics</value>
+  </data>
+  <data name="FormatLink" xml:space="preserve">
+    <value>Markdown Link</value>
+  </data>
+  <data name="FormatLinkLabel" xml:space="preserve">
+    <value>Markdown Link (Label)</value>
+  </data>
+  <data name="FormatLinkText" xml:space="preserve">
+    <value>Markdown Link (Text)</value>
+  </data>
+  <data name="FormatLinkTitle" xml:space="preserve">
+    <value>Markdown Link (Title)</value>
+  </data>
+  <data name="FormatList" xml:space="preserve">
+    <value>Markdown List</value>
+  </data>
+  <data name="FormatPre" xml:space="preserve">
+    <value>Markdown Preformatted</value>
+  </data>
+  <data name="FormatUrl" xml:space="preserve">
+    <value>Markdown URL</value>
+  </data>
 </root>
